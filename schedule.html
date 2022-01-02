@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>STATS 115</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://kit.fontawesome.com/4145f6a1ca.js"></script>
+
+
+	  <!--for toc-->
+<link
+  rel="stylesheet"
+  href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css"
+/>
+<script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+
+	  <!--end of for toc-->
+
+    <!-- function for adding html within html-->
+
+        <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+        <script>
+        $(function () {
+            $(".load-html").each(function () {
+                $(this).load(this.dataset.source);
+            });
+        });
+        </script>
+
+  </head>
+  <body data-spy="scroll" data-target="#toc">
+
+
+    <div class="load-html"  data-source="navbar.html"></div>
+
+
+    <div class = "main-text">
+		
+<button class="accordion">Week 1, Jan 3 - 7, Introduction to the Course and Bayesian Statistics</button>
+<div class="panel"> 
+		<br>
+      <br>
+
+      <table class="table-striped text-left table-bordered" align = "center">
+
+        <thead>
+
+          <th style="width:  3%"></th>
+          <th style="width:  30%"></th>
+          <th style="width:  40%">Notes</th>
+          <th style="width:  5%">Links</th>
+
+          <th style="width:  15%">Due</th>
+        </thead>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Welcome to the Course</td>
+          <td> </td>
+          <td><a href="https://uci.yuja.com/V/Video?v=4076038&node=13732280&a=831652308&autoplay=1" target = "_blank">
+            <i class="fas fa-video" aria-hidden="true"
+            title="Link to lecture video"></i></td>
+          <td></td>
+        </tr>
+
+	<tr>
+      <td><input type="checkbox" /></td>
+      <td>Sign up for ed</td>
+      <td></td>
+      <td><a href="https://canvas.eee.uci.edu/courses/38938/external_tools/7799"
+            target = "_blank"><i class="fas fa-link"
+            aria-hidden="true"
+            title="External link"></i></a></td>
+      <td></td>
+    </tr>
+        
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Introduce Yourself to the Class</td>
+          <td></td>
+          <td> <a href="https://edstem.org/us/courses/16785/discussion/978486", target = "_blank">
+            <i class="fas fa-comment" aria-hidden="true"
+            title="External Link to Canvas Discussion" target = "_blank"></i></a></td>
+          <td>Jan 5, 11:59 pm</td>
+        </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Introduce Yourself to your Professor</td>
+          <td>The responses to this "quiz" will not be available to your classmates.
+            It is untimed.</td>
+
+          <td> <a href="https://www.gradescope.com/courses/344753/assignments/1739290"> <i class="fas fa-edit" aria-hidden="true"
+            title="External Link to Gradescope" target = "_blank"></i></a></td>
+          <td>Jan 5, 11:59 pm</td>
+        </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td> Getting to Know the Course Website &nbsp; &nbsp; </td>
+          <td>Take time go over the contents of this website, especially read the policies section. Do not forget to bookmark <a href="https://stats115.com">stats115.com</a>.</td>
+          <td> </td>
+          <td></td>
+        </tr>
+      </tr>
+
+
+
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Syllabus Quiz</td>
+          <td>Timed 30 min. Before taking it you need to read all the information on this course website. If you have questions come to office hours first before taking the quiz.</td>
+          <td><a href="https://www.gradescope.com/courses/344753/assignments/1739291" target = "_blank"> <i class="fas fa-edit" aria-hidden="true"
+            title="External Link to Gradescope" ></i></a> </td>
+          <td>Jan 5, 11:59 pm</td>
+        </tr>
+
+       <tr>
+      <td><input type="checkbox" /></td>
+      <td> Download and install R  &nbsp; &nbsp; </td>
+      <td>Yes, you do need to download and install unless you have the latest version.</td>
+	  <td><a href="https://mirror.las.iastate.edu/CRAN/" target = "_blank"> <i class="fas fa-link" aria-hidden="true"
+            title="External link"></i></a></td>
+      <td></td>
+    </tr>
+
+  <tr>
+      <td><input type="checkbox" /></td>
+      <td> Download and install RStudio  &nbsp; &nbsp; </td>
+      <td>Yes, you do need to download and install unless you have the latest version. Download the free Desktop version.</td>
+	  <td><a href="https://rstudio.com/products/rstudio/download/" target = "_blank"> <i class="fas fa-link" aria-hidden="true"
+            title="External link"></i></a></td>
+      <td></td>
+    </tr>
+
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Install bayesrules package. </td>
+          <td></td>
+          <td><a href="https://github.com/mdogucu/bayesrules/blob/master/README.md" target=_"blank">
+            <i class="fas fa-link" aria-hidden="true"
+            title="External link"></i></a></td>
+          <td></td>
+
+        </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Install rstan </td>
+          <td>Installation of rstan is quite an experience in comparison to other R packages.
+            Read the guide provided at the link and follow the steps. You can stop for now if you make it to
+            <i>Checking the C++ Toolchain</i>
+</td>
+          <td><a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started" target=_"blank">
+            <i class="fas fa-link" aria-hidden="true"
+            title="External link"></i></a></td>
+          <td></td>
+        </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+
+          <td> Download VPN  &nbsp; &nbsp;  </td>
+          <td>Use the instructions to download VPN so that you can access resources
+            that are only available on the campus network.</td>
+          <td> <a href="https://www.oit.uci.edu/help/vpn/" target = "_blank"> <i class="fas fa-link" aria-hidden="true"
+            title="External link"></i></a></td>
+          <td></td>
+        </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+
+          <td>Toolbox Quiz</td>
+          <td></td>
+          <td> <a href="https://www.gradescope.com/courses/344753/assignments/1739296" target = "_blank"> <i class="fas fa-edit" aria-hidden="true"
+            title="External link"></i></a></td>
+          <td>Jan 5, 11:59 pm</td>
+        </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Introduction to Bayesian Statistics</td>
+          <td></td>
+          <td><a href="https://uci.yuja.com/V/Video?v=2377455&node=8523394&a=920820043&autoplay=1" target = "_blank">
+            <i class="fas fa-video" aria-hidden="true"
+            title="Link to lecture video"></i></a> &nbsp;
+            <a href="slides/week01/slide-01a-intro-bayes.html"
+            target = "_blank"><i class="fas fa-chalkboard-teacher" aria-hidden="true"
+            title="External link"></i></a> &nbsp;</td>
+              <td></td>
+            </tr>
+	
+	        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Probability Review</td>
+          <td></td>
+          <td><a href="https://uci.yuja.com/V/Video?v=2377456&node=8523397&a=1040984428&autoplay=1" target = "_blank">
+            <i class="fas fa-video" aria-hidden="true"
+            title="Link to lecture video"></i></a> &nbsp;
+            <a href="slides/week01/slide-01b-prob-review.html"
+            target = "_blank"><i class="fas fa-chalkboard-teacher" aria-hidden="true"
+            title="External link"></i></a> &nbsp;</td>
+              <td></td>
+            </tr>
+	
+		        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Bayes' Rule for Events</td>
+          <td></td>
+          <td><a href="https://uci.yuja.com/V/Video?v=2377461&node=8523421&a=556175066&autoplay=1" target = "_blank">
+            <i class="fas fa-video" aria-hidden="true"
+            title="Link to lecture video"></i></a> &nbsp;
+            <a href="slides/week01/slide-01c-bayes-events.html"
+            target = "_blank"><i class="fas fa-chalkboard-teacher" aria-hidden="true"
+            title="External link"></i></a> &nbsp;</td>
+              <td></td>
+            </tr>
+
+
+	
+	
+	   <tr>
+        <td><input type="checkbox" /></td>
+        <td>Review of ggplot</td>
+        <td>If you need a refresher on ggplot you can watch the ggplot video from my ICS80 class.</td>
+        <td><a href="https://uci.yuja.com/V/Video?v=1987478&node=7626146&a=864614823&autoplay=1" target = "_blank">
+          <i class="fas fa-video" aria-hidden="true"
+          title="Link to lecture video"></i></a> &nbsp;
+           </td>
+        <td></td>
+      </tr>
+	
+	   <tr>
+        <td><input type="checkbox" /></td>
+        <td>Review of the pipe operator</td>
+        <td>If you need a refresher on the pipe operator you can watch the video from my ICS80 class.</td>
+        <td><a href="https://uci.yuja.com/V/Video?v=2033203&node=7726168&a=542742454&autoplay=1" target = "_blank">
+          <i class="fas fa-video" aria-hidden="true"
+          title="Link to lecture video"></i></a> &nbsp;
+           </td>
+        <td></td>
+      </tr>
+	
+	
+	      <tr>
+        <td><input type="checkbox" /></td>
+        <td>Simulating the Posterior for Events</td>
+        <td></td>
+        <td><a href="https://uci.yuja.com/V/Video?v=2377463&node=8523441&a=94010130&autoplay=1" target = "_blank">
+          <i class="fas fa-video" aria-hidden="true"
+          title="Link to lecture video"></i></a> &nbsp; </td>
+        <td></td>
+      </tr>
+
+
+      <tr>
+        <td><input type="checkbox" /></td>
+
+        <td>Bayes' Rule for Events Quiz</td>
+        <td></td>
+        <td> <a href="https://www.gradescope.com/courses/344753/assignments/1739315" target = "_blank"> <i class="fas fa-edit" aria-hidden="true"
+          title="External link"></i></a></td>
+        <td>Jan 5, 11:59 pm</td>
+      </tr>
+
+
+	<tr>
+      <td><input type="checkbox" /></td>
+      <td> Reading from Bayes Rules! book</td>
+      <td>Chapter 1, Sections 2.1 and 2.2</td>
+      <td><a href="https://www.bayesrulesbook.com/" target = "_blank">
+            <i class="fas fa-book" aria-hidden="true"
+			   title="Link to reading"></i></a> </td>
+      <td></td>
+    </tr>
+
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td>Bayesian Basics Homework</td>
+          <td></td>
+
+          <td><a href="https://www.gradescope.com/courses/344753/assignments/1739321" target = "_blank"> <i class="fas fa-edit" aria-hidden="true"
+            title="External link"></i></a> </td>
+          <td>Jan 10, 9:30 am</td>
+        </tr>
+
+
+      </table>
+
+		<br>
+		</div>
+		
+<button class="accordion">Week 2, Jan 10 - 14, The Beta-Binomial Model</button>
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+<button class="accordion">Week 3, Jan 17 - 21, Balance and Sequentiality in Bayesian Analyses
+</button>
+
+	
+		  
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+ 
+ <button class="accordion">Week 4, Jan 24 - 28, Conjugate Family
+
+</button>
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+	  
+		<button class="accordion">Week 5, Jan 31 - Feb 4, Approximating the Posterior
+
+</button>
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+	  
+	  
+	  
+		<button class="accordion">Week 6, Feb 7 - 111, Metropolis-Hastings Algorithm
+
+</button>
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+	  
+		<button class="accordion">Week 7, Feb 14 - 18, Posterior Inference and Prediction
+			
+
+</button>
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+	  
+		<button class="accordion">Week 8, Feb 21 - 25, Simple Normal Regression
+
+</button>
+
+	  <div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+	  
+		<button class="accordion">Week 9, Feb 28 - March 4, Beyond Simple Normal Regreesion
+</button>
+
+	  <div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>
+
+<button class="accordion">Week 10, March 7 - 11, Hands on Work on Final Projects
+
+</button>
+<div class="panel"> <i class="fas fa-hard-hat" aria-hidden="true"
+      title="A helmet icon" style="color:black;"></i> Under Construction</div>	
+	<br>
+	  
+	  
+	  
+	  
+	  
+
+
+      
+    </div> <!--end of main-text-->
+
+
+    <div class="load-html"  data-source="footer.html"></div>
+
+
+  </body>
+</html>
