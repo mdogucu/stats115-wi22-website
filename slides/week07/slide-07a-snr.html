@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Simple Normal Regression</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dr. Mine Dogucu" />
+    <script src="slide-07a-snr_files/header-attrs-2.11/header-attrs.js"></script>
+    <link rel="stylesheet" href="slide-style.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+class: title-slide
+
+
+
+
+
+
+
+&lt;br&gt;
+&lt;br&gt;
+.right-panel[ 
+
+# Simple Normal Regression
+## Dr. Mine Dogucu
+Examples from [bayesrulesbook.com](https://bayesrulesbook.com)
+
+]
+
+---
+
+
+```r
+glimpse(bikes)
+```
+
+```
+## Rows: 500
+## Columns: 13
+## $ date        &lt;date&gt; 2011-01-01, 2011-01-03, 2011-01-0…
+## $ season      &lt;fct&gt; winter, winter, winter, winter, wi…
+## $ year        &lt;int&gt; 2011, 2011, 2011, 2011, 2011, 2011…
+## $ month       &lt;fct&gt; Jan, Jan, Jan, Jan, Jan, Jan, Jan,…
+## $ day_of_week &lt;fct&gt; Sat, Mon, Tue, Wed, Fri, Sat, Mon,…
+## $ weekend     &lt;lgl&gt; TRUE, FALSE, FALSE, FALSE, FALSE, …
+## $ holiday     &lt;fct&gt; no, no, no, no, no, no, no, no, no…
+## $ temp_actual &lt;dbl&gt; 57.39952, 46.49166, 46.76000, 48.7…
+## $ temp_feel   &lt;dbl&gt; 64.72625, 49.04645, 51.09098, 52.6…
+## $ humidity    &lt;dbl&gt; 80.5833, 43.7273, 59.0435, 43.6957…
+## $ windspeed   &lt;dbl&gt; 10.749882, 16.636703, 10.739832, 1…
+## $ weather_cat &lt;fct&gt; categ2, categ1, categ1, categ1, ca…
+## $ rides       &lt;int&gt; 654, 1229, 1454, 1518, 1362, 891, …
+```
+
+---
+
+## Rides
+
+.pull-left[
+
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+]
+
+.pull-right[
+`\begin{split}
+Y_i | \mu, \sigma &amp; \stackrel{ind}{\sim} N(\mu, \sigma^2)\\
+\mu               &amp; \sim N(\theta, \tau^2)   \\
+\sigma            &amp; \sim \text{ some prior model.} \\
+\end{split}`
+
+]
+---
+
+class: middle 
+
+## Regression Model
+
+`\(Y_i\)` the number of rides  
+`\(X_i\)` temperature (in Fahrenheit) on day `\(i\)`. 
+
+--
+
+`\(\mu_i = \beta_0 + \beta_1X_i\)`
+
+--
+
+`\(\beta_0:\)` the typical ridership on days in which the temperature was 0 degrees ( `\(X_i\)`=0). It is not interpretable in this case.
+
+`\(\beta_1:\)` the typical change in ridership for every one unit increase in temperature.
+
+---
+
+### Normal likelihood model
+
+`\begin{split}
+Y_i | \beta_0, \beta_1, \sigma &amp; \stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1X_i \; .\\
+\end{split}`
+
+&lt;img src="slide-07a-snr_files/figure-html/ch-9-normal-assumptions-1.png" style="display: block; margin: auto;" /&gt;
+
+These simulations show two cases where `\(\beta_0 = -2000\)` and slope `\(\beta_1 = 100\)`.
+On the left `\(\sigma = 2000\)` and on the right `\(\sigma = 200\)` (right). In both cases, the model line is defined by `\(\beta_0 + \beta_1 x = -2000 + 100 x\)`.
+
+
+---
+
+## Prior Models
+
+`\(\text{likelihood model:} \; \; \; Y_i | \beta_0, \beta_1, \sigma \;\;\;\stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right)\text{ with } \mu_i = \beta_0 + \beta_1X_i\)`
+
+`\(\text{prior models:}\)` 
+
+`\(\beta_0\sim N(m_0, s_0^2 )\)`  
+`\(\beta_1\sim N(m_1, s_1^2 )\)`  
+`\(\sigma \sim \text{Exp}(l)\)`
+
+--
+
+Recall: 
+
+`\(\text{Exp}(l) = \text{Gamma}(1, l)\)`
+
+---
+
+class: middle
+
+## Prior Models
+
+`$$\begin{split}
+Y_i | \beta_0, \beta_1, \sigma &amp; \stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1X_i \\
+\beta_0  &amp; \sim N\left(3482, 3937^2 \right)  \\
+\beta_1  &amp; \sim N\left(0, 351^2 \right) \\
+\sigma   &amp; \sim \text{Exp}(0.00064) \; .\\
+\end{split}$$`
+
+
+---
+
+class: middle
+
+
+```r
+plot_normal(mean = 5000, sd = 1000) + 
+  labs(x = "beta_0c", y = "pdf")
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+
+
+```r
+plot_normal(mean = 100, sd = 40) + 
+  labs(x = "beta_1", y = "pdf")
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+
+
+```r
+plot_gamma(shape = 1, rate = 0.0008) + 
+  labs(x = "sigma", y = "pdf")
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+class: middle
+
+`$$\begin{split}
+Y_i | \beta_0, \beta_1, \sigma &amp; \stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1X_i \\
+\beta_{0c}  &amp; \sim N\left(5000, 1000^2 \right)  \\
+\beta_1  &amp; \sim N\left(100, 40^2 \right) \\
+\sigma   &amp; \sim \text{Exp}(0.0008)  .\\
+\end{split}$$`
+
+---
+
+class: middle 
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+## Simulation via `rstanarm`
+
+
+```r
+bike_model &lt;- stan_glm(rides ~ temp_feel, data = bikes,
+                       family = gaussian,
+                       prior_intercept = normal(5000, 1000),
+                       prior = normal(100, 40), 
+                       prior_aux = exponential(0.0008),
+                       chains = 4, iter = 5000*2, seed = 84735,
+                       refresh = FALSE) 
+```
+
+The `refresh = FALSE` prevents printing out your chains and iterations, especially useful in R Markdown.
+
+---
+
+class: middle
+
+
+```r
+# Effective sample size ratio and Rhat
+neff_ratio(bike_model)
+```
+
+```
+## (Intercept)   temp_feel       sigma 
+##     1.04185     1.03700     1.00360
+```
+
+```r
+rhat(bike_model)
+```
+
+```
+## (Intercept)   temp_feel       sigma 
+##   0.9999203   0.9999217   1.0000107
+```
+
+The effective sample size ratios are slightly above 1 and the R-hat values are very close to 1, indicating that the chains are stable, mixing quickly, and behaving much like an independent sample.
+
+---
+
+class: middle
+
+
+```r
+mcmc_trace(bike_model, size = 0.1)
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+
+
+```r
+mcmc_dens_overlay(bike_model)
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+# STEP 1: DEFINE the model
+stan_bike_model &lt;- "
+  data {
+    int&lt;lower = 0&gt; n;
+    vector[n] Y;
+    vector[n] X;
+  }
+  parameters {
+    real beta0;
+    real beta1;
+    real&lt;lower = 0&gt; sigma;
+  }
+  model {
+    Y ~ normal(beta0 + beta1 * X, sigma);
+    beta0 ~ normal(-2000, 1000);
+    beta1 ~ normal(100, 40);
+    sigma ~ exponential(0.0008);
+  }
+"
+```
+
+---
+
+
+```r
+# STEP 2: SIMULATE the posterior
+stan_bike_sim &lt;- 
+  stan(model_code = stan_bike_model, 
+       data = list(n = nrow(bikes), Y = bikes$rides, X = bikes$temp_feel), 
+       chains = 4, iter = 5000*2, seed = 84735)
+```
+
+```
+## 
+## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 1).
+## Chain 1: 
+## Chain 1: Gradient evaluation took 8.1e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.81 seconds.
+## Chain 1: Adjust your expectations accordingly!
+## Chain 1: 
+## Chain 1: 
+## Chain 1: Iteration:    1 / 10000 [  0%]  (Warmup)
+## Chain 1: Iteration: 1000 / 10000 [ 10%]  (Warmup)
+## Chain 1: Iteration: 2000 / 10000 [ 20%]  (Warmup)
+## Chain 1: Iteration: 3000 / 10000 [ 30%]  (Warmup)
+## Chain 1: Iteration: 4000 / 10000 [ 40%]  (Warmup)
+## Chain 1: Iteration: 5000 / 10000 [ 50%]  (Warmup)
+## Chain 1: Iteration: 5001 / 10000 [ 50%]  (Sampling)
+## Chain 1: Iteration: 6000 / 10000 [ 60%]  (Sampling)
+## Chain 1: Iteration: 7000 / 10000 [ 70%]  (Sampling)
+## Chain 1: Iteration: 8000 / 10000 [ 80%]  (Sampling)
+## Chain 1: Iteration: 9000 / 10000 [ 90%]  (Sampling)
+## Chain 1: Iteration: 10000 / 10000 [100%]  (Sampling)
+## Chain 1: 
+## Chain 1:  Elapsed Time: 2.19521 seconds (Warm-up)
+## Chain 1:                2.43108 seconds (Sampling)
+## Chain 1:                4.62629 seconds (Total)
+## Chain 1: 
+## 
+## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 2).
+## Chain 2: 
+## Chain 2: Gradient evaluation took 3e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.3 seconds.
+## Chain 2: Adjust your expectations accordingly!
+## Chain 2: 
+## Chain 2: 
+## Chain 2: Iteration:    1 / 10000 [  0%]  (Warmup)
+## Chain 2: Iteration: 1000 / 10000 [ 10%]  (Warmup)
+## Chain 2: Iteration: 2000 / 10000 [ 20%]  (Warmup)
+## Chain 2: Iteration: 3000 / 10000 [ 30%]  (Warmup)
+## Chain 2: Iteration: 4000 / 10000 [ 40%]  (Warmup)
+## Chain 2: Iteration: 5000 / 10000 [ 50%]  (Warmup)
+## Chain 2: Iteration: 5001 / 10000 [ 50%]  (Sampling)
+## Chain 2: Iteration: 6000 / 10000 [ 60%]  (Sampling)
+## Chain 2: Iteration: 7000 / 10000 [ 70%]  (Sampling)
+## Chain 2: Iteration: 8000 / 10000 [ 80%]  (Sampling)
+## Chain 2: Iteration: 9000 / 10000 [ 90%]  (Sampling)
+## Chain 2: Iteration: 10000 / 10000 [100%]  (Sampling)
+## Chain 2: 
+## Chain 2:  Elapsed Time: 2.28486 seconds (Warm-up)
+## Chain 2:                2.6179 seconds (Sampling)
+## Chain 2:                4.90276 seconds (Total)
+## Chain 2: 
+## 
+## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 3).
+## Chain 3: 
+## Chain 3: Gradient evaluation took 2.7e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.27 seconds.
+## Chain 3: Adjust your expectations accordingly!
+## Chain 3: 
+## Chain 3: 
+## Chain 3: Iteration:    1 / 10000 [  0%]  (Warmup)
+## Chain 3: Iteration: 1000 / 10000 [ 10%]  (Warmup)
+## Chain 3: Iteration: 2000 / 10000 [ 20%]  (Warmup)
+## Chain 3: Iteration: 3000 / 10000 [ 30%]  (Warmup)
+## Chain 3: Iteration: 4000 / 10000 [ 40%]  (Warmup)
+## Chain 3: Iteration: 5000 / 10000 [ 50%]  (Warmup)
+## Chain 3: Iteration: 5001 / 10000 [ 50%]  (Sampling)
+## Chain 3: Iteration: 6000 / 10000 [ 60%]  (Sampling)
+## Chain 3: Iteration: 7000 / 10000 [ 70%]  (Sampling)
+## Chain 3: Iteration: 8000 / 10000 [ 80%]  (Sampling)
+## Chain 3: Iteration: 9000 / 10000 [ 90%]  (Sampling)
+## Chain 3: Iteration: 10000 / 10000 [100%]  (Sampling)
+## Chain 3: 
+## Chain 3:  Elapsed Time: 2.34275 seconds (Warm-up)
+## Chain 3:                2.38885 seconds (Sampling)
+## Chain 3:                4.73161 seconds (Total)
+## Chain 3: 
+## 
+## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 4).
+## Chain 4: 
+## Chain 4: Gradient evaluation took 2.9e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.29 seconds.
+## Chain 4: Adjust your expectations accordingly!
+## Chain 4: 
+## Chain 4: 
+## Chain 4: Iteration:    1 / 10000 [  0%]  (Warmup)
+## Chain 4: Iteration: 1000 / 10000 [ 10%]  (Warmup)
+## Chain 4: Iteration: 2000 / 10000 [ 20%]  (Warmup)
+## Chain 4: Iteration: 3000 / 10000 [ 30%]  (Warmup)
+## Chain 4: Iteration: 4000 / 10000 [ 40%]  (Warmup)
+## Chain 4: Iteration: 5000 / 10000 [ 50%]  (Warmup)
+## Chain 4: Iteration: 5001 / 10000 [ 50%]  (Sampling)
+## Chain 4: Iteration: 6000 / 10000 [ 60%]  (Sampling)
+## Chain 4: Iteration: 7000 / 10000 [ 70%]  (Sampling)
+## Chain 4: Iteration: 8000 / 10000 [ 80%]  (Sampling)
+## Chain 4: Iteration: 9000 / 10000 [ 90%]  (Sampling)
+## Chain 4: Iteration: 10000 / 10000 [100%]  (Sampling)
+## Chain 4: 
+## Chain 4:  Elapsed Time: 2.67899 seconds (Warm-up)
+## Chain 4:                2.69294 seconds (Sampling)
+## Chain 4:                5.37194 seconds (Total)
+## Chain 4:
+```
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "pygments",
+"highlightLines": true,
+"highlightLanguage": "r"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
