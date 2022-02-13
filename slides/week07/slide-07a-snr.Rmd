@@ -520,3 +520,20 @@ shortcut_prediction <-
   posterior_predict(bike_model, newdata = data.frame(temp_feel = 75))
 ```
 
+```{r}
+head(shortcut_prediction, 3)
+```
+
+
+
+---
+
+```{r}
+# Construct a 95% posterior credible interval
+posterior_interval(shortcut_prediction, prob = 0.95)
+
+# Plot the approximate predictive model
+mcmc_dens(shortcut_prediction) + 
+  xlab("predicted ridership on a 75 degree day")
+```
+
