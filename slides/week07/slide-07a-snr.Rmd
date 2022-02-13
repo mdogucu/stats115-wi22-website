@@ -59,13 +59,13 @@ ggplot(data.frame(x = c(-4,4)), aes(x=x)) +
 ]
 
 .pull-right[
-\begin{split}
-Y_i | \mu, \sigma & \stackrel{ind}{\sim} N(\mu, \sigma^2)\\
-\mu               & \sim N(\theta, \tau^2)   \\
-\sigma            & \sim \text{ some prior model.} \\
-\end{split}
+
+$Y_i | \mu, \sigma  \stackrel{ind}{\sim} N(\mu, \sigma^2)$  
+$\mu \sim N(\theta, \tau^2)$
+$\sigma  \sim \text{ some prior model.}$
 
 ]
+
 ---
 
 class: middle 
@@ -285,12 +285,14 @@ stan_bike_model <- "
 
 ---
 
-```{r}
+class: middle
+
+```{r cache=TRUE}
 # STEP 2: SIMULATE the posterior
 stan_bike_sim <- 
   stan(model_code = stan_bike_model, 
        data = list(n = nrow(bikes), Y = bikes$rides, X = bikes$temp_feel), 
-       chains = 4, iter = 5000*2, seed = 84735)
+       chains = 4, iter = 5000*2, seed = 84735, refresh = FALSE)
 ```
 
 ---
@@ -302,7 +304,7 @@ broom.mixed::tidy(bike_model, effects = c("fixed", "aux"),
 
 
 ```{r echo = FALSE}
-model_summary <- tidy(bike_model, effects = c("fixed", "aux"),
+model_summary <- broom.mixed::tidy(bike_model, effects = c("fixed", "aux"),
                       conf.int = TRUE, conf.level = 0.80)
 b0_median <- model_summary[1,2]
 b1_median <- model_summary[2,2]
@@ -313,8 +315,7 @@ b1_upper <- model_summary[2,5]
 Referring to the `tidy()` summary, the __posterior median relationship__ is
 
 $$\begin{equation}
-`r round(b0_median,2)` + `r round(b1_median,2)` X .
-(\#eq:post-med-trend-ch9)
+`r round(b0_median,2)` + `r round(b1_median,2)` X
 \end{equation}$$
 
 ---
@@ -333,7 +334,7 @@ head(bike_model_df, 3)
 
 class: middle
 
-```{r}
+```{r warning=FALSE, fig.height=4}
 # 50 simulated model lines
 bikes %>%
   tidybayes::add_fitted_draws(bike_model, n = 50) %>%
@@ -377,7 +378,7 @@ pred <- round(b0_median,2) + (round(b1_median,2)*75)
 Your natural first crack at this question might be to plug the 75-degree temperature into the posterior median model.
 Thus, we expect that there will be `r round(pred)` riders tomorrow:
 
-$$`r round(b0_median,2)` + `r round(b1_median,2)`*75 = `r pred` .$$
+$$`r round(b0_median,2)` + `r round(b1_median,2)`*75 = `r pred`$$
 
 --
 
@@ -392,22 +393,24 @@ Recall that this singular prediction ignores two potential sources of variabilit
 - __Sampling variability__ in the data    
     The observed ridership outcomes, $Y$, typically _deviate_ from the model line. That is, we don't expect every 75-degree day to have the same exact number of rides.
     
+--
+    
 - __Posterior variability__ in parameters $(\beta_0, \beta_1, \sigma)$    
 
 The posterior median model is merely the center in a _range_ of plausible model lines $\beta_0 + \beta_1 X$. We should consider this entire range as well as that in $\sigma$, the degree to which observations might deviate from the model lines.
+
+--
 
 The __posterior predictive model__ of a new data point $Y_{\text{new}}$ accounts for both sources of variability.
 
 
 ---
 
-Now, we don't actually have a nice, tidy formula for the posterior pdf of our regression parameters, $f(\beta_0,\beta_1,\sigma|\vec{y})$, and thus can't get a nice tidy formula for the posterior predictive pdf $f\left(y_{\text{new}} | \vec{y}\right)$.
-What we _do_ have is 20,000 sets of parameters in the Markov chain $\left(\beta_0^{(i)},\beta_1^{(i)},\sigma^{(i)}\right)$.
+We have20,000 sets of parameters in the Markov chain $\left(\beta_0^{(i)},\beta_1^{(i)},\sigma^{(i)}\right)$.
 We can then _approximate_ the posterior predictive model for $Y_{\text{new}}$ at $X = 75$ by simulating a ridership prediction from the Normal model evaluated each parameter set:
 
 $$Y_{\text{new}}^{(i)} | \beta_0, \beta_1, \sigma  \; \sim \; N\left(\mu^{(i)}, \left(\sigma^{(i)}\right)^2\right) \;\; \text{ with } \;\; \mu^{(i)} = \beta_0^{(i)} + \beta_1^{(i)} \cdot 75.$$
-
-Thus, each of the 20,000 parameter sets in our Markov chain (left) produces a unique prediction (right):
+--
 
 $$\left[
 \begin{array}{lll} 
@@ -427,11 +430,10 @@ Y_{\text{new}}^{(20000)} \\
 \end{array}
 \right]$$
 
-The resulting collection of 20,000 predictions, $\left\lbrace Y_{\text{new}}^{(1)}, Y_{\text{new}}^{(2)}, \ldots, Y_{\text{new}}^{(20000)} \right\rbrace$, _approximates_ the posterior predictive model of ridership $Y$ on 75-degree days.\index{posterior predictive model}
-We will obtain this approximation both "by hand," which helps us build some powerful intuition, and using shortcut R functions.
-
 
 ---
+
+class: middle 
 
 ```{r}
 first_set <- head(bike_model_df, 1)
@@ -441,6 +443,8 @@ first_set
 
 ---
 
+class: middle 
+
 ```{r}
 mu <- first_set$`(Intercept)` + first_set$temp_feel * 75
 mu
@@ -449,6 +453,9 @@ mu
 
 ---
 
+class: middle 
+
+
 ```{r}
 set.seed(84735)
 y_new <- rnorm(1, mean = mu, sd = first_set$sigma)
@@ -456,6 +463,8 @@ y_new
 ```
 
 ---
+
+class: middle 
 
 ```{r}
 # Predict rides for each parameter set in the chain
@@ -473,6 +482,8 @@ head(predict_75, 3)
 
 ---
 
+class: middle 
+
 ```{r}
 # Construct 80% posterior credible intervals
 predict_75 %>% 
@@ -485,7 +496,8 @@ predict_75 %>%
 
 ---
 
-.pull-left[
+class: middle 
+
 ```{r eval = FALSE}
 # Plot the posterior model of the typical ridership on 75 degree days
 ggplot(predict_75, aes(x = mu)) + 
@@ -495,21 +507,24 @@ ggplot(predict_75, aes(x = y_new)) +
   geom_density()
 ```
 
-]
 
+---
 
+class: middle 
 
-```{r ch9-post-pred, fig.width = 4, echo = FALSE}
+```{r ch9-post-pred, echo = FALSE}
 g1 <- ggplot(predict_75, aes(x = mu)) + 
   geom_density() +
   lims(x = range(predict_75$y_new), y = c(0, 0.0065))
 g2 <- ggplot(predict_75, aes(x = y_new)) + 
   geom_density() +
   lims(x = range(predict_75$y_new), y = c(0, 0.0065))
-grid.arrange(g1,g2,ncol=2)
+gridExtra::grid.arrange(g1,g2,ncol=2)
 ```
 
 ---
+
+class: middle 
 
 ## Posterior Prediction with rstanarm
 
@@ -524,16 +539,64 @@ shortcut_prediction <-
 head(shortcut_prediction, 3)
 ```
 
-
-
 ---
+
+class: middle 
+
 
 ```{r}
 # Construct a 95% posterior credible interval
 posterior_interval(shortcut_prediction, prob = 0.95)
+```
 
+---
+
+class: middle 
+
+```{r fig.height=5}
 # Plot the approximate predictive model
 mcmc_dens(shortcut_prediction) + 
   xlab("predicted ridership on a 75 degree day")
 ```
+
+---
+
+class: middle
+
+## Using the default priors in `rstanarm`
+
+```{r}
+bike_model_default <- stan_glm(
+  rides ~ temp_feel, data = bikes, 
+  family = gaussian,
+  prior_intercept = normal(5000, 2.5, autoscale = TRUE),
+  prior = normal(0, 2.5, autoscale = TRUE), 
+  prior_aux = exponential(1, autoscale = TRUE),
+  chains = 4, iter = 5000*2, seed = 84735, refresh=FALSE)
+```
+
+By setting `autoscale = TRUE`, `stan_glm()` adjusts or scales our default priors to optimize the study of parameters which have different scales.
+
+---
+
+class: middle
+
+```{r}
+prior_summary(bike_model_default)
+```
+
+
+---
+
+class: middle
+
+## Default vs non-default priors
+
+Con: weakly informative priors are tuned with information from the data (through a fairly minor consideration of scale). 
+
+Pro: Unless we have strong prior information, utilizing the defaults will typically lead to more stable simulation results than if we tried tuning our own vague priors.
+
+Pro: The defaults can help us get up and running with Bayesian modeling. In future lectures, we’ll often utilize the defaults in order to focus on the new modeling concepts.
+
+
 

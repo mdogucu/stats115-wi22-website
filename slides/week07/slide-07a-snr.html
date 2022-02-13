@@ -39,19 +39,19 @@ glimpse(bikes)
 ```
 ## Rows: 500
 ## Columns: 13
-## $ date        &lt;date&gt; 2011-01-01, 2011-01-03, 2011-01-0…
-## $ season      &lt;fct&gt; winter, winter, winter, winter, wi…
-## $ year        &lt;int&gt; 2011, 2011, 2011, 2011, 2011, 2011…
-## $ month       &lt;fct&gt; Jan, Jan, Jan, Jan, Jan, Jan, Jan,…
-## $ day_of_week &lt;fct&gt; Sat, Mon, Tue, Wed, Fri, Sat, Mon,…
-## $ weekend     &lt;lgl&gt; TRUE, FALSE, FALSE, FALSE, FALSE, …
-## $ holiday     &lt;fct&gt; no, no, no, no, no, no, no, no, no…
-## $ temp_actual &lt;dbl&gt; 57.39952, 46.49166, 46.76000, 48.7…
-## $ temp_feel   &lt;dbl&gt; 64.72625, 49.04645, 51.09098, 52.6…
-## $ humidity    &lt;dbl&gt; 80.5833, 43.7273, 59.0435, 43.6957…
-## $ windspeed   &lt;dbl&gt; 10.749882, 16.636703, 10.739832, 1…
-## $ weather_cat &lt;fct&gt; categ2, categ1, categ1, categ1, ca…
-## $ rides       &lt;int&gt; 654, 1229, 1454, 1518, 1362, 891, …
+## $ date        &lt;date&gt; 2011-01-01, 2011-01-03, 2011-01-04, 2011-01-05, 20…
+## $ season      &lt;fct&gt; winter, winter, winter, winter, winter, winter, win…
+## $ year        &lt;int&gt; 2011, 2011, 2011, 2011, 2011, 2011, 2011, 2011, 201…
+## $ month       &lt;fct&gt; Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, J…
+## $ day_of_week &lt;fct&gt; Sat, Mon, Tue, Wed, Fri, Sat, Mon, Tue, Wed, Thu, F…
+## $ weekend     &lt;lgl&gt; TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALS…
+## $ holiday     &lt;fct&gt; no, no, no, no, no, no, no, no, no, no, no, no, no,…
+## $ temp_actual &lt;dbl&gt; 57.39952, 46.49166, 46.76000, 48.74943, 46.50332, 4…
+## $ temp_feel   &lt;dbl&gt; 64.72625, 49.04645, 51.09098, 52.63430, 50.79551, 4…
+## $ humidity    &lt;dbl&gt; 80.5833, 43.7273, 59.0435, 43.6957, 49.8696, 53.583…
+## $ windspeed   &lt;dbl&gt; 10.749882, 16.636703, 10.739832, 12.522300, 11.3046…
+## $ weather_cat &lt;fct&gt; categ2, categ1, categ1, categ1, categ2, categ2, cat…
+## $ rides       &lt;int&gt; 654, 1229, 1454, 1518, 1362, 891, 1280, 1220, 1137,…
 ```
 
 ---
@@ -66,13 +66,13 @@ glimpse(bikes)
 ]
 
 .pull-right[
-`\begin{split}
-Y_i | \mu, \sigma &amp; \stackrel{ind}{\sim} N(\mu, \sigma^2)\\
-\mu               &amp; \sim N(\theta, \tau^2)   \\
-\sigma            &amp; \sim \text{ some prior model.} \\
-\end{split}`
+
+`\(Y_i | \mu, \sigma  \stackrel{ind}{\sim} N(\mu, \sigma^2)\)`  
+`\(\mu \sim N(\theta, \tau^2)\)`
+`\(\sigma  \sim \text{ some prior model.}\)`
 
 ]
+
 ---
 
 class: middle 
@@ -96,9 +96,9 @@ class: middle
 
 ### Normal likelihood model
 
-`\begin{split}
+\begin{split}
 Y_i | \beta_0, \beta_1, \sigma &amp; \stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1X_i \; .\\
-\end{split}`
+\end{split}
 
 &lt;img src="slide-07a-snr_files/figure-html/ch-9-normal-assumptions-1.png" style="display: block; margin: auto;" /&gt;
 
@@ -289,117 +289,414 @@ stan_bike_model &lt;- "
 
 ---
 
+class: middle
+
 
 ```r
 # STEP 2: SIMULATE the posterior
 stan_bike_sim &lt;- 
   stan(model_code = stan_bike_model, 
        data = list(n = nrow(bikes), Y = bikes$rides, X = bikes$temp_feel), 
-       chains = 4, iter = 5000*2, seed = 84735)
+       chains = 4, iter = 5000*2, seed = 84735, refresh = FALSE)
+```
+
+---
+
+
+```r
+broom.mixed::tidy(bike_model, effects = c("fixed", "aux"),
+     conf.int = TRUE, conf.level = 0.80)
 ```
 
 ```
-## 
-## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 1).
-## Chain 1: 
-## Chain 1: Gradient evaluation took 8.1e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.81 seconds.
-## Chain 1: Adjust your expectations accordingly!
-## Chain 1: 
-## Chain 1: 
-## Chain 1: Iteration:    1 / 10000 [  0%]  (Warmup)
-## Chain 1: Iteration: 1000 / 10000 [ 10%]  (Warmup)
-## Chain 1: Iteration: 2000 / 10000 [ 20%]  (Warmup)
-## Chain 1: Iteration: 3000 / 10000 [ 30%]  (Warmup)
-## Chain 1: Iteration: 4000 / 10000 [ 40%]  (Warmup)
-## Chain 1: Iteration: 5000 / 10000 [ 50%]  (Warmup)
-## Chain 1: Iteration: 5001 / 10000 [ 50%]  (Sampling)
-## Chain 1: Iteration: 6000 / 10000 [ 60%]  (Sampling)
-## Chain 1: Iteration: 7000 / 10000 [ 70%]  (Sampling)
-## Chain 1: Iteration: 8000 / 10000 [ 80%]  (Sampling)
-## Chain 1: Iteration: 9000 / 10000 [ 90%]  (Sampling)
-## Chain 1: Iteration: 10000 / 10000 [100%]  (Sampling)
-## Chain 1: 
-## Chain 1:  Elapsed Time: 2.19521 seconds (Warm-up)
-## Chain 1:                2.43108 seconds (Sampling)
-## Chain 1:                4.62629 seconds (Total)
-## Chain 1: 
-## 
-## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 2).
-## Chain 2: 
-## Chain 2: Gradient evaluation took 3e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.3 seconds.
-## Chain 2: Adjust your expectations accordingly!
-## Chain 2: 
-## Chain 2: 
-## Chain 2: Iteration:    1 / 10000 [  0%]  (Warmup)
-## Chain 2: Iteration: 1000 / 10000 [ 10%]  (Warmup)
-## Chain 2: Iteration: 2000 / 10000 [ 20%]  (Warmup)
-## Chain 2: Iteration: 3000 / 10000 [ 30%]  (Warmup)
-## Chain 2: Iteration: 4000 / 10000 [ 40%]  (Warmup)
-## Chain 2: Iteration: 5000 / 10000 [ 50%]  (Warmup)
-## Chain 2: Iteration: 5001 / 10000 [ 50%]  (Sampling)
-## Chain 2: Iteration: 6000 / 10000 [ 60%]  (Sampling)
-## Chain 2: Iteration: 7000 / 10000 [ 70%]  (Sampling)
-## Chain 2: Iteration: 8000 / 10000 [ 80%]  (Sampling)
-## Chain 2: Iteration: 9000 / 10000 [ 90%]  (Sampling)
-## Chain 2: Iteration: 10000 / 10000 [100%]  (Sampling)
-## Chain 2: 
-## Chain 2:  Elapsed Time: 2.28486 seconds (Warm-up)
-## Chain 2:                2.6179 seconds (Sampling)
-## Chain 2:                4.90276 seconds (Total)
-## Chain 2: 
-## 
-## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 3).
-## Chain 3: 
-## Chain 3: Gradient evaluation took 2.7e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.27 seconds.
-## Chain 3: Adjust your expectations accordingly!
-## Chain 3: 
-## Chain 3: 
-## Chain 3: Iteration:    1 / 10000 [  0%]  (Warmup)
-## Chain 3: Iteration: 1000 / 10000 [ 10%]  (Warmup)
-## Chain 3: Iteration: 2000 / 10000 [ 20%]  (Warmup)
-## Chain 3: Iteration: 3000 / 10000 [ 30%]  (Warmup)
-## Chain 3: Iteration: 4000 / 10000 [ 40%]  (Warmup)
-## Chain 3: Iteration: 5000 / 10000 [ 50%]  (Warmup)
-## Chain 3: Iteration: 5001 / 10000 [ 50%]  (Sampling)
-## Chain 3: Iteration: 6000 / 10000 [ 60%]  (Sampling)
-## Chain 3: Iteration: 7000 / 10000 [ 70%]  (Sampling)
-## Chain 3: Iteration: 8000 / 10000 [ 80%]  (Sampling)
-## Chain 3: Iteration: 9000 / 10000 [ 90%]  (Sampling)
-## Chain 3: Iteration: 10000 / 10000 [100%]  (Sampling)
-## Chain 3: 
-## Chain 3:  Elapsed Time: 2.34275 seconds (Warm-up)
-## Chain 3:                2.38885 seconds (Sampling)
-## Chain 3:                4.73161 seconds (Total)
-## Chain 3: 
-## 
-## SAMPLING FOR MODEL '45eca288556576b95d342a6c16ab73b2' NOW (CHAIN 4).
-## Chain 4: 
-## Chain 4: Gradient evaluation took 2.9e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.29 seconds.
-## Chain 4: Adjust your expectations accordingly!
-## Chain 4: 
-## Chain 4: 
-## Chain 4: Iteration:    1 / 10000 [  0%]  (Warmup)
-## Chain 4: Iteration: 1000 / 10000 [ 10%]  (Warmup)
-## Chain 4: Iteration: 2000 / 10000 [ 20%]  (Warmup)
-## Chain 4: Iteration: 3000 / 10000 [ 30%]  (Warmup)
-## Chain 4: Iteration: 4000 / 10000 [ 40%]  (Warmup)
-## Chain 4: Iteration: 5000 / 10000 [ 50%]  (Warmup)
-## Chain 4: Iteration: 5001 / 10000 [ 50%]  (Sampling)
-## Chain 4: Iteration: 6000 / 10000 [ 60%]  (Sampling)
-## Chain 4: Iteration: 7000 / 10000 [ 70%]  (Sampling)
-## Chain 4: Iteration: 8000 / 10000 [ 80%]  (Sampling)
-## Chain 4: Iteration: 9000 / 10000 [ 90%]  (Sampling)
-## Chain 4: Iteration: 10000 / 10000 [100%]  (Sampling)
-## Chain 4: 
-## Chain 4:  Elapsed Time: 2.67899 seconds (Warm-up)
-## Chain 4:                2.69294 seconds (Sampling)
-## Chain 4:                5.37194 seconds (Total)
-## Chain 4:
+## # A tibble: 4 × 5
+##   term        estimate std.error conf.low conf.high
+##   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+## 1 (Intercept)  -2194.     362.    -2656.    -1732. 
+## 2 temp_feel       82.2      5.15     75.6      88.8
+## 3 sigma         1281.      40.7    1231.     1336. 
+## 4 mean_PPD      3487.      80.4    3385.     3591.
 ```
+
+
+
+
+Referring to the `tidy()` summary, the __posterior median relationship__ is
+
+`$$\begin{equation}
+-2194.24 + 82.16 X
+\end{equation}$$`
+
+---
+
+class: middle
+
+
+```r
+# Store the 4 chains for each parameter in 1 data frame
+bike_model_df &lt;- as.data.frame(bike_model)
+# Check it out
+nrow(bike_model_df)
+```
+
+```
+## [1] 20000
+```
+
+```r
+head(bike_model_df, 3)
+```
+
+```
+##   (Intercept) temp_feel    sigma
+## 1   -2656.894  88.16061 1323.364
+## 2   -2188.090  83.01252 1322.962
+## 3   -1983.816  81.53971 1363.346
+```
+
+---
+
+class: middle
+
+
+```r
+# 50 simulated model lines
+bikes %&gt;%
+  tidybayes::add_fitted_draws(bike_model, n = 50) %&gt;%
+  ggplot(aes(x = temp_feel, y = rides)) +
+    geom_line(aes(y = .value, group = .draw), alpha = 0.15) + 
+    geom_point(data = bikes, size = 0.05)
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+
+class: middle 
+
+
+```r
+# Tabulate the beta_1 values that exceed 0
+bike_model_df %&gt;% 
+  mutate(exceeds_0 = temp_feel &gt; 0) %&gt;% 
+  tabyl(exceeds_0)
+```
+
+```
+##  exceeds_0     n percent
+##       TRUE 20000       1
+```
+
+
+---
+
+class: middle
+
+## Posterior Prediction
+
+Suppose a weather report indicates that tomorrow will be a 75-degree day in D.C. What's your posterior guess of the number of riders that Capital Bikeshare should anticipate?
+
+
+---
+
+class: middle
+
+
+
+
+Your natural first crack at this question might be to plug the 75-degree temperature into the posterior median model.
+Thus, we expect that there will be 3968 riders tomorrow:
+
+`$$-2194.24 + 82.16*75 = 3967.76$$`
+
+--
+
+Not quiet.
+
+---
+
+class: middle
+
+Recall that this singular prediction ignores two potential sources of variability:
+
+- __Sampling variability__ in the data    
+    The observed ridership outcomes, `\(Y\)`, typically _deviate_ from the model line. That is, we don't expect every 75-degree day to have the same exact number of rides.
+    
+--
+    
+- __Posterior variability__ in parameters `\((\beta_0, \beta_1, \sigma)\)`    
+
+The posterior median model is merely the center in a _range_ of plausible model lines `\(\beta_0 + \beta_1 X\)`. We should consider this entire range as well as that in `\(\sigma\)`, the degree to which observations might deviate from the model lines.
+
+--
+
+The __posterior predictive model__ of a new data point `\(Y_{\text{new}}\)` accounts for both sources of variability.
+
+
+---
+
+We have20,000 sets of parameters in the Markov chain `\(\left(\beta_0^{(i)},\beta_1^{(i)},\sigma^{(i)}\right)\)`.
+We can then _approximate_ the posterior predictive model for `\(Y_{\text{new}}\)` at `\(X = 75\)` by simulating a ridership prediction from the Normal model evaluated each parameter set:
+
+`$$Y_{\text{new}}^{(i)} | \beta_0, \beta_1, \sigma  \; \sim \; N\left(\mu^{(i)}, \left(\sigma^{(i)}\right)^2\right) \;\; \text{ with } \;\; \mu^{(i)} = \beta_0^{(i)} + \beta_1^{(i)} \cdot 75.$$`
+--
+
+`$$\left[
+\begin{array}{lll} 
+\beta_0^{(1)} &amp; \beta_1^{(1)} &amp; \sigma^{(1)} \\
+\beta_0^{(2)} &amp; \beta_1^{(2)} &amp; \sigma^{(2)} \\
+\vdots &amp; \vdots &amp; \vdots \\
+\beta_0^{(20000)} &amp; \beta_1^{(20000)} &amp; \sigma^{(20000)} \\
+\end{array}
+\right]
+\;\; \longrightarrow \;\;
+\left[
+\begin{array}{l} 
+Y_{\text{new}}^{(1)} \\
+Y_{\text{new}}^{(2)} \\
+\vdots \\
+Y_{\text{new}}^{(20000)} \\
+\end{array}
+\right]$$`
+
+
+---
+
+class: middle 
+
+
+```r
+first_set &lt;- head(bike_model_df, 1)
+first_set
+```
+
+```
+##   (Intercept) temp_feel    sigma
+## 1   -2656.894  88.16061 1323.364
+```
+
+
+---
+
+class: middle 
+
+
+```r
+mu &lt;- first_set$`(Intercept)` + first_set$temp_feel * 75
+mu
+```
+
+```
+## [1] 3955.152
+```
+
+
+---
+
+class: middle 
+
+
+
+```r
+set.seed(84735)
+y_new &lt;- rnorm(1, mean = mu, sd = first_set$sigma)
+y_new
+```
+
+```
+## [1] 4838.144
+```
+
+---
+
+class: middle 
+
+
+```r
+# Predict rides for each parameter set in the chain
+set.seed(84735)
+predict_75 &lt;- bike_model_df %&gt;% 
+  mutate(mu = `(Intercept)` + temp_feel*75,
+         y_new = rnorm(20000, mean = mu, sd = sigma))
+```
+
+
+
+```r
+head(predict_75, 3)
+```
+
+```
+##   (Intercept) temp_feel    sigma       mu    y_new
+## 1   -2656.894  88.16061 1323.364 3955.152 4838.144
+## 2   -2188.090  83.01252 1322.962 4037.849 3874.013
+## 3   -1983.816  81.53971 1363.346 4131.662 5196.255
+```
+
+---
+
+class: middle 
+
+
+```r
+# Construct 80% posterior credible intervals
+predict_75 %&gt;% 
+  summarize(lower_mu = quantile(mu, 0.025),
+            upper_mu = quantile(mu, 0.975),
+            lower_new = quantile(y_new, 0.025),
+            upper_new = quantile(y_new, 0.975))
+```
+
+```
+##   lower_mu upper_mu lower_new upper_new
+## 1 3843.027 4094.863  1499.832  6482.125
+```
+
+
+---
+
+class: middle 
+
+
+```r
+# Plot the posterior model of the typical ridership on 75 degree days
+ggplot(predict_75, aes(x = mu)) + 
+  geom_density()
+# Plot the posterior predictive model of tomorrow's ridership
+ggplot(predict_75, aes(x = y_new)) + 
+  geom_density()
+```
+
+
+---
+
+class: middle 
+
+&lt;img src="slide-07a-snr_files/figure-html/ch9-post-pred-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle 
+
+## Posterior Prediction with rstanarm
+
+
+```r
+# Simulate a set of predictions
+set.seed(84735)
+shortcut_prediction &lt;- 
+  posterior_predict(bike_model, newdata = data.frame(temp_feel = 75))
+```
+
+
+```r
+head(shortcut_prediction, 3)
+```
+
+```
+##             1
+## [1,] 4838.144
+## [2,] 3874.013
+## [3,] 5196.255
+```
+
+---
+
+class: middle 
+
+
+
+```r
+# Construct a 95% posterior credible interval
+posterior_interval(shortcut_prediction, prob = 0.95)
+```
+
+```
+##       2.5%    97.5%
+## 1 1499.832 6482.125
+```
+
+---
+
+class: middle 
+
+
+```r
+# Plot the approximate predictive model
+mcmc_dens(shortcut_prediction) + 
+  xlab("predicted ridership on a 75 degree day")
+```
+
+&lt;img src="slide-07a-snr_files/figure-html/unnamed-chunk-31-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+## Using the default priors in `rstanarm`
+
+
+```r
+bike_model_default &lt;- stan_glm(
+  rides ~ temp_feel, data = bikes, 
+  family = gaussian,
+  prior_intercept = normal(5000, 2.5, autoscale = TRUE),
+  prior = normal(0, 2.5, autoscale = TRUE), 
+  prior_aux = exponential(1, autoscale = TRUE),
+  chains = 4, iter = 5000*2, seed = 84735, refresh=FALSE)
+```
+
+By setting `autoscale = TRUE`, `stan_glm()` adjusts or scales our default priors to optimize the study of parameters which have different scales.
+
+---
+
+class: middle
+
+
+```r
+prior_summary(bike_model_default)
+```
+
+```
+## Priors for model 'bike_model_default' 
+## ------
+## Intercept (after predictors centered)
+##   Specified prior:
+##     ~ normal(location = 5000, scale = 2.5)
+##   Adjusted prior:
+##     ~ normal(location = 5000, scale = 3937)
+## 
+## Coefficients
+##   Specified prior:
+##     ~ normal(location = 0, scale = 2.5)
+##   Adjusted prior:
+##     ~ normal(location = 0, scale = 351)
+## 
+## Auxiliary (sigma)
+##   Specified prior:
+##     ~ exponential(rate = 1)
+##   Adjusted prior:
+##     ~ exponential(rate = 0.00064)
+## ------
+## See help('prior_summary.stanreg') for more details
+```
+
+
+---
+
+class: middle
+
+## Default vs non-default priors
+
+Con: weakly informative priors are tuned with information from the data (through a fairly minor consideration of scale). 
+
+Pro: Unless we have strong prior information, utilizing the defaults will typically lead to more stable simulation results than if we tried tuning our own vague priors.
+
+Pro: The defaults can help us get up and running with Bayesian modeling. In future lectures, we’ll often utilize the defaults in order to focus on the new modeling concepts.
+
+
 
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
