@@ -144,20 +144,6 @@ $\text{Exp}(l) = \text{Gamma}(1, l)$
 
 class: middle
 
-## Prior Models
-
-$$\begin{split}
-Y_i | \beta_0, \beta_1, \sigma & \stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1X_i \\
-\beta_0  & \sim N\left(3482, 3937^2 \right)  \\
-\beta_1  & \sim N\left(0, 351^2 \right) \\
-\sigma   & \sim \text{Exp}(0.00064) \; .\\
-\end{split}$$
-
-
----
-
-class: middle
-
 ```{r fig.height=5}
 plot_normal(mean = 5000, sd = 1000) + 
   labs(x = "beta_0c", y = "pdf")
@@ -485,7 +471,7 @@ head(predict_75, 3)
 class: middle 
 
 ```{r}
-# Construct 80% posterior credible intervals
+# Construct 95% posterior credible intervals
 predict_75 %>% 
   summarize(lower_mu = quantile(mu, 0.025),
             upper_mu = quantile(mu, 0.975),
