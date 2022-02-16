@@ -249,23 +249,6 @@ ppc_intervals(bikes$rides, yrep = predictions, x = bikes$temp_feel,
               prob = 0.5, prob_outer = 0.95)
 ```
 
-
-```r
-set.seed(7)
-index &lt;- sample(1:500, size = 25)
-bikes_small &lt;- bikes[index,]
-predictions_small &lt;- predictions[,index]
-g1 &lt;- ppc_intervals(bikes$rides, 
-  yrep = predictions, 
-  x = bikes$temp_feel, 
-  prob = 0.5, prob_outer = 0.95)
-g2 &lt;- ppc_intervals(bikes_small$rides, 
-  yrep = predictions_small, 
-  x = bikes_small$temp_feel, 
-  prob = 0.5, prob_outer = 0.95)
-ggpubr::ggarrange(g1,g2,ncol=2, common.legend = TRUE, legend = "right")
-```
-
 &lt;img src="slide-07b-model-eval_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" /&gt;
 
 

@@ -237,7 +237,7 @@ ppc_intervals(bikes$rides, yrep = predictions, x = bikes$temp_feel,
               prob = 0.5, prob_outer = 0.95)
 ```
 
-```{r cache=TRUE}
+```{r cache=TRUE, echo=FALSE}
 set.seed(7)
 index <- sample(1:500, size = 25)
 bikes_small <- bikes[index,]
