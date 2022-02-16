@@ -4,7 +4,7 @@
     <title>Evaluating Regression Models</title>
     <meta charset="utf-8" />
     <meta name="author" content="Dr. Mine Dogucu" />
-    <script src="slide-08c-reg-eval_files/header-attrs-2.6.6/header-attrs.js"></script>
+    <script src="slide-07b-model-eval_files/header-attrs-2.11/header-attrs.js"></script>
     <link rel="stylesheet" href="slide-style.css" type="text/css" />
   </head>
   <body>
@@ -30,13 +30,58 @@ Examples from [bayesrulesbook.com](https://bayesrulesbook.com)
 ]
 
 ---
-1. __How fair is the model?__    
+
+class: middle
+
+1. __How fair is the model?__ How was the data collected? By whom and for what purpose? How might the results of the analysis, or the data collection itself, impact individuals and society? What biases or power structures might be baked into this analysis?   
   
-2. __How wrong is the model?__    
+--
+
+2. __How wrong is the model?__  George Box famously said: “All models are wrong, but some are useful.” What’s important to know then is, how wrong is our model? Are our model assumptions reasonable?
+
+--
 
 3. __How accurate are the posterior predictive models?__    
 
 ---
+
+class: middle
+
+## Checking Model Assumptions
+
+
+`$$Y_i | \beta_0, \beta_1, \sigma \stackrel{ind}{\sim} N(\mu_i, \sigma^2) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1 X_i  .$$`
+
+1. Conditioned on `\(X\)`, the observed __data__ `\(Y_i\)` on case `\(i\)` is _independent_ of the observed data on any other case `\(j\)`.
+2. The typical `\(Y\)` outcome can be written as a _linear function_ of `\(X\)`, `\(\mu = \beta_0 + \beta_1 X\)`.
+3. At any `\(X\)` value, `\(Y\)` __varies normally__ around `\(\mu\)` with consistent variability `\(\sigma\)`. 
+
+
+---
+
+class: middle
+
+## Independence
+
+
+_When taken alone_, ridership `\(Y\)` is likely correlated over time -- today's ridership likely tells us something about tomorrow's ridership.
+Yet much of this correlation, or dependence, can be explained by the time of year and features associated with the time of year -- like temperature `\(X\)`.
+Thus, knowing the _temperature_ on two subsequent days may very well "cancel out" the time correlation in their ridership data.
+
+---
+
+class: middle
+
+## Linearity and Constant Variance
+
+&lt;img src="slide-07b-model-eval_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+The relationship between ridership and temperature does appear to be linear. Further, with the slight exception of colder days on which ridership is uniformly small, the variability in ridership does appear to be roughly consistent across the range of temperatures `\(X\)`.
+
+---
+
+class: middle
+
 
 __Posterior predictive check__
 
@@ -48,119 +93,79 @@ Then a "good" Bayesian model will produce _predictions_ of `\(Y\)` with features
 
 ---
 
-
+class: middle
 
 
 ```r
-head(normal_model_df, 1)
-```
-
-```
-##   (Intercept) temp_feel    sigma
-## 1   -2339.928  84.37713 1289.935
-```
-
-```r
-`(Intercept)` &lt;- round(head(normal_model_df, 1)$`(Intercept)`)
-temp_feel     &lt;- round(head(normal_model_df, 1)$temp_feel, 2)
-sigma         &lt;- round(head(normal_model_df, 1)$sigma)
+bike_model &lt;- stan_glm(rides ~ temp_feel, data = bikes,
+                       family = gaussian,
+                       prior_intercept = normal(5000, 1000),
+                       prior = normal(100, 40), 
+                       prior_aux = exponential(0.0008),
+                       chains = 4, iter = 5000*2, seed = 84735, refresh = FALSE)
+bike_model_df &lt;- as.data.frame(bike_model)
+set.seed(84735)
+predict_75 &lt;- bike_model_df %&gt;% 
+  mutate(mu = `(Intercept)` + temp_feel*75) %&gt;% 
+  mutate(y_new = rnorm(20000, mu, sigma))
 ```
 
 ---
 
-
-```r
-`(Intercept)`
-```
-
-```
-## [1] -2340
-```
-
-```r
-temp_feel
-```
-
-```
-## [1] 84.38
-```
-
-```r
-sigma
-```
-
-```
-## [1] 1290
-```
-
----
-
-
+class: middle
 
 
 ```r
+first_set &lt;- head(bike_model_df, 1)
+beta_0 &lt;- first_set$`(Intercept)`
+beta_1 &lt;- first_set$temp_feel
+sigma  &lt;- first_set$sigma
 set.seed(84735)
 one_simulation &lt;- bikes %&gt;% 
-  mutate(simulated_rides = rnorm(
-    500, mean = -2340 + 84.38 * temp_feel, sd = 1290)) %&gt;% 
+  mutate(mu = beta_0 + beta_1 * temp_feel,
+         simulated_rides = rnorm(500, mean = mu, sd = sigma)) %&gt;% 
   select(temp_feel, rides, simulated_rides)
-```
 
---
-
-
-```r
-head(one_simulation, 3)
+head(one_simulation, 2)
 ```
 
 ```
 ##   temp_feel rides simulated_rides
-## 1  64.72625   654        3982.331
-## 2  49.04645  1229        1638.786
-## 3  51.09098  1454        2978.376
+## 1  64.72625   654        3932.404
+## 2  49.04645  1229        1503.185
 ```
 
 ---
 
+class: middle
 
-```r
-ggplot(one_simulation, aes(x = simulated_rides)) + 
-  geom_density(color = "lightblue") + 
-  geom_density(aes(x = rides), color = "darkblue")
-```
+&lt;img src="slide-07b-model-eval_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
 
-&lt;img src="slide-08c-reg-eval_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+One posterior simulated dataset of ridership (light blue) along with the actual observed ridership data (dark blue)
 
 ---
+
+class: middle
 
 
 ```r
 # Examine 50 of the 20000 simulated samples
-set.seed(84735)
-bayesplot::pp_check(normal_model_sim, nreps = 50)
+pp_check(bike_model, nreps = 50) + 
+  xlab("rides")
 ```
 
-&lt;img src="slide-08c-reg-eval_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="slide-07b-model-eval_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+
+
+class: middle
+
+&lt;img src="slide-07b-model-eval_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
 
 
 ---
 
 
-```r
-bikes %&gt;% 
-  filter(date == "2012-10-22") %&gt;% 
-  select(temp_feel, rides)
-```
-
-```
-##   temp_feel rides
-## 1  75.46478  6228
-```
-
-
-
-
----
 
 class: middle
 
@@ -170,71 +175,63 @@ __predictive error__: `\(Y - Y'\)`
 
 ---
 
+class: middle
+
+
 
 ```r
 predict_75 %&gt;% 
-  summarize(
-    median = median(y_new),
-    error = 6228 - median(y_new))
+  summarize(mean = mean(y_new), error = 6228 - mean(y_new))
 ```
 
 ```
-##     median    error
-## 1 3946.558 2281.442
+##       mean    error
+## 1 3966.865 2261.135
 ```
 
 ---
 
 class: middle
 
-__median absolute deviation (mad)__ the typical distance between a posterior prediction and the posterior predictive median.
-
-We estimate the _mad_ by calculating the absolute deviations of our 20,000 posterior predictions of `\(Y\)`, `\(\left\lbrace Y_{\text{new}}^{(1)}, Y_{\text{new}}^{(2)}, \ldots, Y_{\text{new}}^{(20000)}\right\rbrace\)`, from the posterior predictive median `\(Y'\)` and calculating the median of these deviations:
-
-`$$\text{mad} = \text{median}_{i \in \{1,2,\ldots,20000\}} \vert Y_{\text{new}}^{(i)} - Y' \vert \; .$$`
-
----
-
 
 ```r
 predict_75 %&gt;% 
-  summarize(
-    error = 6228 - median(y_new),
-    predictive_mad = mad(y_new, constant = 1),
-    error_scaled = error / predictive_mad)
+  summarize(sd = sd(y_new), error = 6228 - mean(y_new),
+            error_scaled = error / sd(y_new))
 ```
 
 ```
-##      error predictive_mad error_scaled
-## 1 2281.442       867.8032     2.628986
+##         sd    error error_scaled
+## 1 1279.789 2261.135     1.766803
 ```
-
 
 ---
 
-## Posterior Prediction Interval
+class: middle
 
 
 ```r
 predict_75 %&gt;% 
   summarize(lower_95 = quantile(y_new, 0.025),
-    lower_50 = quantile(y_new, 0.25),
-    upper_50 = quantile(y_new, 0.75),
-    upper_95 = quantile(y_new, 0.975))
+            lower_50 = quantile(y_new, 0.25),
+            upper_50 = quantile(y_new, 0.75),
+            upper_95 = quantile(y_new, 0.975))
 ```
 
 ```
 ##   lower_95 lower_50 upper_50 upper_95
-## 1 1494.581  3086.11 4822.178 6500.741
+## 1 1499.832 3096.397 4831.226 6482.125
 ```
 
 ---
 
+class: middle
+
 
 ```r
 set.seed(84735)
-predictions &lt;- posterior_predict(normal_model_sim, 
-  newdata = bikes)
+predictions &lt;- posterior_predict(bike_model, newdata = bikes)
+
 dim(predictions)
 ```
 
@@ -242,20 +239,57 @@ dim(predictions)
 ## [1] 20000   500
 ```
 
-
 ---
+
+class: middle
 
 
 ```r
-ppc_intervals(bikes$rides, 
+ppc_intervals(bikes$rides, yrep = predictions, x = bikes$temp_feel, 
+              prob = 0.5, prob_outer = 0.95)
+```
+
+
+```r
+set.seed(7)
+index &lt;- sample(1:500, size = 25)
+bikes_small &lt;- bikes[index,]
+predictions_small &lt;- predictions[,index]
+g1 &lt;- ppc_intervals(bikes$rides, 
   yrep = predictions, 
   x = bikes$temp_feel, 
   prob = 0.5, prob_outer = 0.95)
+g2 &lt;- ppc_intervals(bikes_small$rides, 
+  yrep = predictions_small, 
+  x = bikes_small$temp_feel, 
+  prob = 0.5, prob_outer = 0.95)
+ggpubr::ggarrange(g1,g2,ncol=2, common.legend = TRUE, legend = "right")
 ```
 
-&lt;img src="slide-08c-reg-eval_files/figure-html/unnamed-chunk-17-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="slide-07b-model-eval_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" /&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
+
+class: middle
+
 
 Let `\(Y_1, Y_2, \ldots, Y_n\)` denote `\(n\)` _observed_ outcomes.  Then each `\(Y_i\)` has a corresponding posterior predictive model with _median_ `\(Y_i'\)` and _median absolute deviation_ `\(\text{mad}_i\)`.  We can evaluate the overall posterior predictive model quality by the following measures:
 
@@ -265,26 +299,31 @@ Let `\(Y_1, Y_2, \ldots, Y_n\)` denote `\(n\)` _observed_ outcomes.  Then each `
 
 - The __scaled median absolute error__ `scaled_mae`
 
-    `$$\text{mae scaled} = \text{median}_{i \in \{1,2,\ldots,n\}} \frac{|Y_i - Y_i'|}{\text{mad}_i}$$`
+    `$$\text{mae scaled} = \text{median}_{i \in \{1,2,\ldots,n\}} \frac{|Y_i - Y_i'|}{\text{sd}_i}$$`
 
 - `within_50` and `within_95` measure the proportion of observed values `\(Y_i\)` that fall within their 50% and 95% posterior prediction intervals respectively.  
 
 
 ---
+
+class: middle
+
  
 
 ```r
 # Posterior predictive summaries
-prediction_summary(y = bikes$rides, 
-  yrep = predictions)
+prediction_summary(bike_model, data = bikes)
 ```
 
 ```
-##        mae mae_scaled within_50 within_95
-## 1 989.8291   1.144095      0.44     0.968
+##       mae mae_scaled within_50 within_95
+## 1 981.277  0.7664511     0.432     0.968
 ```
 
 ---
+
+class: middle
+
 
 __The k-fold cross validation algorithm__
 
@@ -310,10 +349,12 @@ class: middle
 ```r
 set.seed(84735)
 cv_procedure &lt;- prediction_summary_cv(
-  data = bikes, model = normal_model_sim, k = 10)
+  data = bikes, model = bike_model, k = 10)
 ```
 
 ---
+
+class: middle
 
 
 ```r
@@ -322,19 +363,22 @@ cv_procedure$folds
 
 ```
 ##    fold       mae mae_scaled within_50 within_95
-## 1     1  982.3498  1.1347732      0.46      0.98
-## 2     2  962.4132  1.1042769      0.40      1.00
-## 3     3  956.3402  1.1045559      0.42      0.98
-## 4     4 1011.6086  1.1598395      0.46      0.98
-## 5     5 1180.3943  1.3649528      0.40      0.96
-## 6     6  932.9605  1.0620776      0.46      0.94
-## 7     7 1267.7214  1.4886004      0.32      0.96
-## 8     8 1117.9843  1.2874389      0.36      1.00
-## 9     9 1108.5276  1.3011456      0.40      0.92
-## 10   10  789.2742  0.9012649      0.56      0.94
+## 1     1  990.1998  0.7699098      0.46      0.98
+## 2     2  963.7588  0.7423091      0.40      1.00
+## 3     3  951.2922  0.7299569      0.42      0.98
+## 4     4 1018.5916  0.7909998      0.46      0.98
+## 5     5 1161.5245  0.9091055      0.36      0.96
+## 6     6  937.6392  0.7326643      0.46      0.94
+## 7     7 1270.8992  1.0061093      0.32      0.96
+## 8     8 1111.9120  0.8604959      0.36      1.00
+## 9     9 1098.7223  0.8679061      0.40      0.92
+## 10   10  786.8053  0.6059727      0.56      0.96
 ```
 
 ---
+
+class: middle
+
 
 
 ```r
@@ -343,7 +387,7 @@ cv_procedure$cv
 
 ```
 ##        mae mae_scaled within_50 within_95
-## 1 1030.957   1.190893     0.424     0.966
+## 1 1029.134  0.8015429      0.42     0.968
 ```
 
 
