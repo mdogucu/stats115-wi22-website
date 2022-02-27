@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Hierarchical Linear Models with No Predictors</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dr. Mine Dogucu" />
+    <script src="slide-09b-hlm-nopred_files/header-attrs-2.11/header-attrs.js"></script>
+    <link rel="stylesheet" href="slide-style.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+class: title-slide
+
+
+
+
+
+
+
+&lt;br&gt;
+&lt;br&gt;
+.right-panel[ 
+
+# Hierarchical Linear Models with No Predictors
+## Dr. Mine Dogucu
+Examples from [bayesrulesbook.com](https://bayesrulesbook.com)
+
+]
+
+
+---
+
+class: middle
+
+## Data - Running
+
+
+```r
+data(cherry_blossom_sample)
+
+running &lt;- cherry_blossom_sample %&gt;% 
+  select(runner, age, net)
+glimpse(running)
+```
+
+```
+## Rows: 252
+## Columns: 3
+## $ runner &lt;fct&gt; 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, …
+## $ age    &lt;int&gt; 53, 54, 55, 56, 57, 58, 59, 52, 53, 54,…
+## $ net    &lt;dbl&gt; 83.98333, 74.30000, 75.15000, 74.21667,…
+```
+
+---
+
+class: middle
+
+
+```r
+ggplot(running, aes(x = runner, y = net)) + 
+  geom_boxplot()
+```
+
+```
+## Warning: Removed 67 rows containing non-finite values
+## (stat_boxplot).
+```
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+class: middle
+
+## Complete Pooling 
+
+
+Complete pooling technique: combine all 252 observations across our 36 runners into one pool of information. 
+
+
+
+```r
+ggplot(running, aes(y = net, x = age)) + 
+  geom_point()
+```
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+class: middle
+
+## Complete Pooling 
+
+
+`$$Y_i | \beta_0, \beta_1, \sigma \stackrel{ind}{\sim} N\left(\mu_i, \sigma^2\right) \;\; \text{ with } \;\; \mu_i = \beta_0 + \beta_1X_i$$`
+
+
+```r
+complete_pooled_model &lt;- stan_glm(
+  net ~ age, 
+  data = running, family = gaussian, 
+  prior_intercept = normal(0, 2.5, autoscale = TRUE),
+  prior = normal(0, 2.5, autoscale = TRUE), 
+  prior_aux = exponential(1, autoscale = TRUE),
+  chains = 4, iter = 5000*2, refresh = 0, seed = 84735)
+```
+
+
+---
+
+class: middle
+
+
+
+```r
+tidy(complete_pooled_model, conf.int = TRUE, conf.level = 0.80)
+```
+
+```
+## # A tibble: 2 × 5
+##   term        estimate std.error conf.low conf.high
+##   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+## 1 (Intercept)   75.2      24.6     43.7     106.   
+## 2 age            0.268     0.446   -0.302     0.842
+```
+
+---
+
+class: middle
+
+
+```r
+# Plot of the posterior median model
+ggplot(running, aes(x = age, y = net, group = runner)) + 
+  geom_smooth(method = "lm", se = FALSE, color = "gray", size = 0.5) + 
+  geom_abline(aes(intercept = 75.2, slope = 0.268), color = "blue")
+```
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+
+```r
+# Select an example subset
+examples &lt;- running %&gt;% 
+  filter(runner %in% c("1", "20", "22"))
+
+ggplot(examples, aes(x = age, y = net)) + 
+  geom_point() + 
+  facet_wrap(~ runner) + 
+  geom_abline(aes(intercept = 75.2242, slope = 0.2678), 
+              color = "blue")
+```
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+1. Though the observations on one runner might be independent of those on another, the observations _within_ a runner are _correlated_. That is, how fast a runner ran in their previous race tells us something about how fast they'll run in the next. 
+2. With respect to the relationship between running time and age, people are inherently different.
+
+--
+
+Framework of a complete pooled model:
+
+&lt;img src="img/complete_pool_diagram.png" width="50%" style="display: block; margin: auto;" /&gt;
+
+--
+
+Drawbacks of a complete pooling approach:
+
+
+1. we violate the assumption of independence; and, in turn,
+2. we might produce misleading conclusions about the relationship itself and the significance of this relationship.
+
+---
+
+class: middle
+
+## No pooling
+
+&lt;img src="img/complete_pool_diagram.png" width="50%" style="display: block; margin: auto;" /&gt;
+
+--
+
+No pooling approach builds a _separate_ model for each runner.
+
+--
+
+Let `\((Y_{ij}, X_{ij})\)` denote the observed run times and age for runner `\(j\)` in their `\(i\)`th race.
+Then the data structure for the Normal linear regression model of run time vs age for runner `\(j\)` is:
+
+
+`$$Y_{ij} | \beta_{0j}, \beta_{1j}, \sigma \sim N\left(\mu_{ij}, \sigma^2\right) \;\; \text{ with } \;\; \mu_{ij} = \beta_{0j} + \beta_{1j} X_{ij}$$`
+
+--
+
+This model allows for each runner `\(j\)` to have a unique intercept `\(\beta_{0j}\)` and age coefficient `\(\beta_{1j}\)`.
+
+
+
+---
+
+class: middle
+
+On the context of running, the no pooled models reflect the fact that some people tend to be faster than others (hence the different `\(\beta_{0j}\)`) and that _changes_ in speed over time aren't the same for everyone (hence the different `\(\beta_{1j}\)`).
+
+---
+
+class: middle
+
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
+
+Based on this model, what do you anticipate that your running time will be at the age of 55?
+
+---
+
+class: middle
+
+Drawbacks of a no pooling approach:
+
+- We cannot reliably generalize or apply the group-specific no pooled models to groups outside those in our sample.
+- No pooled models assume that one group doesn’t contain relevant information about another, and thus ignores potentially valuable information. This is especially consequential when we have a small number of observations per group.
+
+---
+
+class: middle
+
+&lt;img src="img/partial_pool_diagram.png" width="70%" style="display: block; margin: auto;" /&gt;
+
+
+**Examples**: Students within classrooms, patients within hospitals, different runs for each runner (longitudunal, repeated-measures)
+
+---
+
+class: middle
+
+__Within-group variability__
+
+The degree of the variability among multiple observations _within_ each group can be interesting on its own. For example, we can examine how _consistent_ an _individual's_ running times are from year to year.
+    
+--
+
+__Between-group variability__
+    
+Hierarchical data also allows us to examine the variability from group to group. For example, we can examine the degree to which running patterns _vary_ from individual to individual.
+
+---
+
+class: middle
+
+
+```r
+data(spotify)
+
+spotify &lt;- spotify %&gt;% 
+  select(artist, title, popularity) %&gt;% 
+  mutate(artist = fct_reorder(artist, popularity, .fun = 'mean'))
+
+glimpse(spotify)
+```
+
+```
+## Rows: 350
+## Columns: 3
+## $ artist     &lt;fct&gt; Alok, Alok, Alok, Alok, Alok, Alok,…
+## $ title      &lt;chr&gt; "On &amp; On", "All The Lies", "Hear Me…
+## $ popularity &lt;dbl&gt; 79, 56, 75, 65, 52, 45, 79, 61, 61,…
+```
+
+```r
+nlevels(spotify$artist)
+```
+
+```
+## [1] 44
+```
+
+---
+
+
+```r
+artist_means &lt;- spotify %&gt;% 
+  group_by(artist) %&gt;% 
+  summarize(count = n(), popularity = mean(popularity))
+
+artist_means %&gt;%
+  slice(1:2, 43:44)
+```
+
+```
+## # A tibble: 4 × 3
+##   artist        count popularity
+##   &lt;fct&gt;         &lt;int&gt;      &lt;dbl&gt;
+## 1 Mia X             4       13.2
+## 2 Chris Goldarg    10       16.4
+## 3 Lil Skies         3       79.3
+## 4 Camilo            9       81
+```
+
+---
+
+class: middle
+
+&lt;img src="img/spotify-hierarchical-data-diagram.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: middle
+
+__Complete pooling__    
+
+_Ignore_ artists and lump all songs together 
+
+__No pooling__    
+
+_Separately_ analyze each artist and assume that one artist's data doesn't contain valuable information about another artist 
+    
+__Partial pooling (via hierarchical models)__    
+
+Acknowledge the grouping structure, so that even though artists differ in popularity, they might share valuable information about each other _and_ about the broader population of artists.
+    
+
+---
+
+class: middle
+
+## The hierarchy
+
+Layer 1:
+
+`\(Y_{ij} | \mu_j, \sigma_y   \hspace{-0.075in} \sim \text{model of how song popularity varies WITHIN artist } j\)`
+--
+
+Layer 2:
+
+`\(\mu_j | \mu, \sigma_\mu  \hspace{-0.075in} \sim \text{model of how the typical popularity} \mu_j \text{varies BETWEEN artists}\)`
+--
+
+Layer 3:
+
+`\(\mu, \sigma_y, \sigma_\mu   \hspace{-0.075in} \sim \text{prior models for shared global parameters}\)`
+
+
+---
+
+class: middle
+
+- `\(\mu_j\)` = mean song popularity for artist `\(j\)`; and
+- `\(\sigma_y\)` = __within-group variability__, i.e., the standard deviation in popularity from song to song within each artist.
+
+
+---
+
+class: middle
+
+Popularity varies from artist to artist.
+We model this variability in mean popularity __between__ artists by assuming that the individual mean popularity levels, `\(\mu_j\)`, are _Normally_ distributed around `\(\mu\)` with standard deviation `\(\sigma_\mu\)`,\index{between-group variability}
+
+`$$\mu_j | \mu, \sigma_\mu \sim N(\mu, \sigma^2_\mu)  .$$`
+
+Thus, we can think of the two new parameters as follows:
+
+- `\(\mu\)` = the __global average__ of mean song popularity `\(\mu_j\)` across all artists `\(j\)`, i.e., the mean popularity rating for the most average artist; and\index{global parameter}
+- `\(\sigma_\mu\)` = __between-group variability__, i.e., the standard deviation in mean popularity `\(\mu_j\)` from artist to artist.
+
+---
+
+class: middle
+
+
+```r
+ggplot(artist_means, aes(x = popularity)) + 
+  geom_density()
+```
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-17-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+class: middle
+
+__Notation alert__
+
+- There's a difference between `\(\mu_j\)` and `\(\mu\)`. When a parameter has a subscript `\(j\)`, it refers to a feature of group `\(j\)`. When a parameter _doesn't_ have a subscript `\(j\)`, it's the _global_ counterpart, i.e., the same feature across all groups.
+
+- Subscripts signal the group or layer of interest. For example, `\(\sigma_y\)` refers to the standard deviation of `\(Y\)` values within each group, whereas `\(\sigma_\mu\)` refers to the standard deviation of means `\(\mu_j\)` from group to group.
+
+---
+
+class: middle
+
+
+```r
+spotify_hierarchical &lt;- stan_glmer(
+  popularity ~ (1 | artist), 
+  data = spotify, family = gaussian,
+  prior_intercept = normal(50, 2.5, autoscale = TRUE),
+  prior_aux = exponential(1, autoscale = TRUE),
+  prior_covariance = decov(reg = 1, conc = 1, shape = 1, scale = 1),
+  chains = 4, iter = 5000*2, seed = 84735, refresh=FALSE)
+```
+
+- To indicate that the `artist` variable defines the group structure of our data, as opposed to it being a predictor of `popularity`, the appropriate formula here is `popularity ~ (1 | artist)`.
+- The prior for `\(\sigma_\mu\)` is specified by `prior_covariance`. For this particular model, with only one set of artist-specific parameters `\(\mu_j\)`, this is equivalent to an Exp(1) prior. (We will learn more about `prior_covariance` next lecture).
+
+---
+
+class: middle
+
+
+
+```r
+pp_check(spotify_hierarchical) + 
+  xlab("popularity")
+```
+
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-19-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+class: middle
+
+
+```r
+# Store the simulation in a data frame
+spotify_hierarchical_df &lt;- as.data.frame(spotify_hierarchical)
+
+# Check out the first 3 and last 3 parameter labels
+spotify_hierarchical_df %&gt;% 
+  colnames() %&gt;% 
+  as.data.frame() %&gt;% 
+  slice(1:3, 45:47)
+```
+
+```
+##                                       .
+## 1                           (Intercept)
+## 2           b[(Intercept) artist:Mia_X]
+## 3   b[(Intercept) artist:Chris_Goldarg]
+## 4          b[(Intercept) artist:Camilo]
+## 5                                 sigma
+## 6 Sigma[artist:(Intercept),(Intercept)]
+```
+
+---
+
+class: middle
+
+## Posterior Analysis of Global Parameters
+
+- `\(\mu\)` = `(Intercept)`
+- `\(\sigma_y\)` = `sigma`
+- `\(\sigma_\mu^2\)` = `Sigma[artist:(Intercept),(Intercept)]`.This is not a typo. The default output gives us information about the _standard deviation_ within artists ( `\(\sigma_y\)` ) but the _variance_ between artists ( `\(\sigma_\mu^2\)` ).
+
+---
+
+
+class: middle
+
+
+```r
+tidy(spotify_hierarchical, effects = "fixed", 
+     conf.int = TRUE, conf.level = 0.80)
+```
+
+```
+## # A tibble: 1 × 5
+##   term        estimate std.error conf.low conf.high
+##   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+## 1 (Intercept)     52.5      2.48     49.3      55.7
+```
+
+
+
+Pay attention to `effects = fixed`, where "fixed" is synonymous with "non-varying" or "global."
+
+Per the results, there's an 80% chance that the _average_ artist has a mean popularity rating between 49.3 and 55.7.
+
+---
+
+class: middle
+
+To call up the posterior medians for `\(\sigma_y\)` and `\(\sigma_\mu\)`, we can specify `effects = "ran_pars"`, i.e., `par`ameters related to `ran`domness or variability:
+
+
+```r
+tidy(spotify_hierarchical, effects = "ran_pars")
+```
+
+```
+## # A tibble: 2 × 3
+##   term                    group    estimate
+##   &lt;chr&gt;                   &lt;chr&gt;       &lt;dbl&gt;
+## 1 sd_(Intercept).artist   artist       15.1
+## 2 sd_Observation.Residual Residual     14.0
+```
+
+The posterior median of `\(\sigma_y\)` (`sd_Obervation.Residual`) suggests that, _within_ any given artist, popularity ratings tend to vary by 14 points _from song to song_.
+The _between_ standard deviation `\(\sigma_\mu\)` (`sd_(Intercept).artist`) tends to be slightly higher at around 15.1.
+Thus, the _mean_ popularity rating tends to vary by 15.1 points _from artist to artist_.
+
+
+---
+
+class: middle
+
+`$$\text{Cor}(Y_{ij}, Y_{kj}) = \frac{\sigma^2_\mu}{\sigma^2_\mu + \sigma^2_y}$$`
+
+---
+
+class: middle
+
+These two sources of variability suggest that the popularity levels among multiple songs _by the same artist_ tend to have a moderate correlation near 0.54.
+
+
+```r
+15.1^2 / (15.1^2 + 14.0^2)
+```
+
+```
+## [1] 0.5377468
+```
+
+
+
+--
+
+
+Thinking of this another way, 54% of the variability in song popularity is explained by differences between artists, whereas 46% is explained by differences among the songs within each artist:
+
+
+```r
+14.0^2 / (15.1^2 + 14.0^2)
+```
+
+```
+## [1] 0.4622532
+```
+
+---
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "pygments",
+"highlightLines": true,
+"highlightLanguage": "r"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
