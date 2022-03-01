@@ -24,6 +24,7 @@ library(rstanarm)
 library(bayesplot)
 library(janitor)
 library(rstan)
+library(tidybayes)
 library(broom.mixed)
 ```
 
@@ -303,11 +304,13 @@ class: middle
 Layer 1:
 
 $Y_{ij} | \mu_j, \sigma_y   \hspace{-0.075in} \sim \text{model of how song popularity varies WITHIN artist } j$
+
 --
 
 Layer 2:
 
 $\mu_j | \mu, \sigma_\mu  \hspace{-0.075in} \sim \text{model of how the typical popularity} \mu_j \text{varies BETWEEN artists}$
+
 --
 
 Layer 3:
@@ -478,3 +481,307 @@ Thinking of this another way, `r ratio`% of the variability in song popularity i
 ```
 
 ---
+
+## Posterior analysis of group-specific parameters
+
+$$\mu_j = \mu + b_j $$
+
+Here, $b_j$ describes the _difference_ between artist $j$'s mean popularity and the global mean popularity.
+
+---
+
+class: middle
+
+```{r}
+artist_summary <- tidy(spotify_hierarchical, effects = "ran_vals", 
+                       conf.int = TRUE, conf.level = 0.80)
+# Check out the results for the first & last 2 artists
+artist_summary %>% 
+  select(level, conf.low, conf.high) %>% 
+  slice(1:2, 43:44)
+```
+
+---
+
+class: middle
+
+```{r echo = FALSE}
+n <- length(levels(spotify$artist))
+```
+
+There's an 80% chance that `Camilo`'s mean popularity rating is between `r round(artist_summary[n,6], 1)` and  `r round(artist_summary[n,7], 1)` _above_ that of the average artist.
+
+--
+
+
+$$\mu_j = \mu + b_j = \text{(Intercept) + b[(Intercept) artist:j]} .$$
+---
+
+class: middle
+
+
+```{r}
+# Get MCMC chains for each mu_j
+artist_chains <- spotify_hierarchical %>%
+  tidybayes::spread_draws(`(Intercept)`, b[,artist]) %>% 
+  mutate(mu_j = `(Intercept)` + b) 
+# Check it out
+artist_chains %>% 
+  select(artist, `(Intercept)`, b, mu_j) %>% 
+  head(4)
+```
+
+```{r echo = FALSE}
+smaller <- artist_chains %>% 
+  select(artist, `(Intercept)`, b, mu_j) %>% 
+  head(4)
+```
+
+---
+
+class: middle
+
+```{r}
+# Get posterior summaries for mu_j
+artist_summary_scaled <- artist_chains %>% 
+  select(-`(Intercept)`, -b) %>% 
+  tidybayes::mean_qi(.width = 0.80) %>% 
+  mutate(artist = fct_reorder(artist, mu_j))
+
+# Check out the results
+artist_summary_scaled %>% 
+  select(artist, mu_j, .lower, .upper) %>% 
+  head(4)
+```
+
+---
+
+class: middle
+
+```{r, fig.align="center", out.width="40%"}
+ggplot(artist_summary_scaled, 
+       aes(x = artist, y = mu_j, ymin = .lower, ymax = .upper)) +
+  geom_pointrange() +
+  xaxis_text(angle = 90, hjust = 1)
+```
+
+---
+
+
+```{r}
+artist_means %>% 
+  filter(artist %in% c("Frank Ocean", "Lil Skies"))
+```
+
+Our posterior understanding of Frank Ocean is based on 40 songs, the most of any artist in the dataset, we have only 3 songs for Lil Skies. We naturally have greater posterior certainty about Frank Ocean’s popularity, and hence narrower intervals.
+
+---
+
+class: middle
+
+
+## Posterior Prediction
+
+First consider the __posterior prediction for an observed group__ or artist, Frank Ocean, the $j$ = `r sum((artist_means$artist == "Frank Ocean")*c(1:44))`th artist in our sample.
+
+--
+
+The first layer of our hierarchical model holds the key in this situation: it assumes that the popularity of individual Frank Ocean songs are Normally distributed around his own mean popularity level $\mu_j$ with standard deviation $\sigma_y$.
+
+--
+
+Thus, to approximate the posterior predictive model for the popularity of Ocean's _next_ song on Spotify, we can simulate a prediction from the Layer 1 model evaluated at each of the 20,000 MCMC parameter sets $\left\lbrace \mu_j^{(i)}, \sigma_y^{(i)}\right\rbrace$:
+
+\begin{equation}
+Y_{\text{new,j}}^{(i)} | \mu_j, \sigma_y  \; \sim \; N\left(\mu_j^{(i)}, \left(\sigma_y^{(i)}\right)^2\right).
+\end{equation}
+
+
+---
+
+class: middle
+
+The resulting predictions $\left\lbrace Y_{\text{new},j}^{(1)}, Y_{\text{new},j}^{(2)}, \ldots, Y_{\text{new},j}^{(20000)} \right\rbrace$ and corresponding posterior predictive model will reflect two sources of variability, and hence uncertainty, in the popularity of Ocean's next song:
+
+- __within-group sampling variability__ in $Y$, i.e., not all of Ocean's songs are equally popular; and
+
+- __posterior variability__ in the model parameters $\mu_j$ and $\sigma_y$, i.e., the underlying mean and variability in popularity across Ocean's songs are unknown and can, themselves, vary.
+
+
+---
+
+class: middle
+
+```{r}
+# Simulate Ocean's posterior predictive model
+set.seed(84735)
+ocean_chains <- spotify_hierarchical_df %>%
+  rename(b = `b[(Intercept) artist:Frank_Ocean]`) %>% 
+  select(`(Intercept)`, b, sigma) %>% 
+  mutate(mu_ocean = `(Intercept)` + b,
+         y_ocean = rnorm(20000, mean = mu_ocean, sd = sigma))
+
+# Check it out
+head(ocean_chains, 3)
+```
+
+
+---
+
+class: middle
+
+```{r}
+# Posterior summary of Y_new,j
+ocean_chains %>% 
+  tidybayes::mean_qi(y_ocean, .width = 0.80) 
+
+# Posterior summary of mu_j
+artist_summary_scaled %>% 
+  filter(artist == "artist:Frank_Ocean")
+```
+
+---
+
+class: middle
+
+Next consider __posterior prediction for a yet unobserved group__.
+
+--
+
+No observed songs for Mohsen Beats means that we do _not_ have any information about their mean popularity $\mu_j$, and thus can't take the same approach as we did for Ocean.
+
+What we _do_ know is this: (1) Mohsen Beats is an artist within the broader population of artists, (2) mean popularity levels among these artists are Normally distributed around some global mean $\mu$ with between-artist standard deviation $\sigma_\mu$ (Layer 2), and (3) our `r n` sampled artists have informed our posterior understanding of this broader population.
+Then to approximate the posterior predictive model for the popularity of Mohsen Beats' next song, we can simulate 20,000 predictions $\left\lbrace Y_{\text{new},\text{mohsen}}^{(1)}, Y_{\text{new},\text{mohsen}}^{(2)}, \ldots, Y_{\text{new},\text{mohsen}}^{(20000)} \right\rbrace$ through a two-step process:
+
+---
+
+class: middle
+
+- __Step 1:__ Simulate a potential _mean_ popularity level $\mu_{\text{mohsen}}$ for Mohsen Beats by drawing from the Layer 2 model evaluated at each MCMC parameter set $\left\lbrace \mu^{(i)}, \sigma_\mu^{(i)}\right\rbrace$:
+
+    $$\mu_{\text{mohsen}}^{(i)} | \mu, \sigma_\mu  \; \sim \; N\left(\mu^{(i)}, \left(\sigma_\mu^{(i)}\right)^2\right).$$
+
+--
+
+- __Step 2:__ Simulate a prediction of song popularity $Y_{\text{new},\text{mohsen}}$ from the Layer 1 model evaluated at each MCMC parameter set $\left\lbrace \mu_{\text{mohsen}}^{(i)}, \sigma_y^{(i)}\right\rbrace$:
+
+    $$Y_{\text{new},\text{mohsen}}^{(i)} | \mu_{\text{mohsen}}, \sigma_y  \; \sim \; N\left(\mu_{\text{mohsen}}^{(i)}, \left(\sigma_y^{(i)}\right)^2\right).$$
+    
+---
+
+class: middle
+
+The additional step in our Mohsen Beats posterior prediction process reflects a _third_ source of variability.
+When predicting song popularity for a new group, we must account for:
+
+- __within-group sampling variability__ in $Y$, i.e., not all of Mohsen Beats' _songs_ are equally popular;
+
+- __between-group sampling variability__ in $\mu_j$, i.e., not all _artists_ are equally popular; and
+
+- __posterior variability__ in the global model parameters $(\sigma_y, \mu, \sigma_\mu)$.
+
+```{r echo = FALSE}
+set.seed(84735)
+mohsen_chains <- spotify_hierarchical_df %>%
+  mutate(sigma_mu = sqrt(`Sigma[artist:(Intercept),(Intercept)]`),
+         mu_mohsen = rnorm(20000, `(Intercept)`, sigma_mu),
+         y_mohsen = rnorm(20000, mean = mu_mohsen, sd = sigma))
+# Posterior predictive summaries
+mohsen_summary <- mohsen_chains %>% 
+  tidybayes::mean_qi(y_mohsen, .width = 0.80)
+```
+
+
+---
+
+class: middle
+
+We're able to predict with 80% posterior certainty that their next song will have a popularity rating somewhere between `r round(mohsen_summary[2], 2)` and `r round(mohsen_summary[3], 2)`:
+
+```{r}
+set.seed(84735)
+mohsen_chains <- spotify_hierarchical_df %>%
+  mutate(sigma_mu = sqrt(`Sigma[artist:(Intercept),(Intercept)]`),
+         mu_mohsen = rnorm(20000, `(Intercept)`, sigma_mu),
+         y_mohsen = rnorm(20000, mu_mohsen, sigma))
+# Posterior predictive summaries
+mohsen_chains %>% 
+  mean_qi(y_mohsen, .width = 0.80)
+```
+
+---
+
+We can replicate the "by hand" simulations for Frank Ocean and Mohsen Beats using the `posterior_predict()` shortcut function.
+
+
+```{r ch16-ocean-mohsen, fig.width = 4, fig.height = 1.7}
+set.seed(84735)
+prediction_shortcut <- posterior_predict(
+  spotify_hierarchical,
+  newdata = data.frame(artist = c("Frank Ocean", "Mohsen Beats")))
+# Posterior predictive model plots
+mcmc_areas(prediction_shortcut, prob = 0.8) +
+  ggplot2::scale_y_discrete(labels = c("Frank Ocean", "Mohsen Beats"))
+```
+
+---
+
+class: middle
+
+```{r eval=FALSE}
+set.seed(84735)
+predictions_hierarchical <- posterior_predict(spotify_hierarchical, 
+                                              newdata = artist_means)
+
+# Posterior predictive plots
+ppc_intervals(artist_means$popularity, yrep = predictions_hierarchical, 
+              prob_outer = 0.80) +
+  ggplot2::scale_x_continuous(labels = artist_means$artist, 
+                              breaks = 1:nrow(artist_means)) +
+  xaxis_text(angle = 90, hjust = 1) + 
+  geom_hline(yintercept = 58.4, linetype = "dashed")
+```
+
+
+---
+
+class: middle
+
+```{r echo=FALSE}
+set.seed(84735)
+predictions_hierarchical <- posterior_predict(spotify_hierarchical, 
+                                              newdata = artist_means)
+
+# Posterior predictive plots
+ppc_intervals(artist_means$popularity, yrep = predictions_hierarchical, 
+              prob_outer = 0.80) +
+  ggplot2::scale_x_continuous(labels = artist_means$artist, 
+                              breaks = 1:nrow(artist_means)) +
+  xaxis_text(angle = 90, hjust = 1) + 
+  geom_hline(yintercept = 58.4, linetype = "dashed")
+```
+
+---
+
+class: middle
+
+__Shrinkage__ refers to the phenomenon in which the group-specific local trends in a hierarchical model are pulled or _shrunk_ toward the global trends.
+
+
+
+When utilizing weakly informative priors, the posterior mean predictions of song popularity from the hierarchical model are (roughly) weighted averages of those from the complete pooled ($\overline{y}_{\text{global}}$) and no pooled ($\overline{y}_j$) models:
+
+$$\frac{\sigma^2_y}{\sigma^2_y + n_j \sigma^2_\mu} \overline{y}_{\text{global}} + \frac{n_j\sigma^2_\mu}{\sigma^2_y + n_j \sigma^2_\mu} \overline{y}_j.$$
+
+
+---
+
+class: middle
+
+In posterior predictions for artist $j$, the _weights_ given to the global and local means depend upon how much data we have on artist $j$ ($n_j$) as well as the comparison of the _within_-group and _between_-group variability in song popularity ( $\sigma_y$ and $\sigma_\mu$ ).
+These weights highlight a couple of scenarios in which individualism fades, i.e., our hierarchical posterior predictions shrink away from the group-specific means $\overline{y}_j$ and toward the global mean $\overline{y}_\text{global}$:
+
+- Shrinkage increases as the number of observations on group $j$, $n_j$, decreases. That is, we rely more and more on global trends to understand a group for which we have little data.
+    
+- Shrinkage increases when the variability within groups, $\sigma_y$, is large in comparison to the variability between groups, $\sigma_\mu$. That is, we rely more and more on global trends to understand a group when there is little distinction in the patterns from one group to the next.
+
