@@ -48,9 +48,9 @@ glimpse(running)
 ```
 ## Rows: 252
 ## Columns: 3
-## $ runner &lt;fct&gt; 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, …
-## $ age    &lt;int&gt; 53, 54, 55, 56, 57, 58, 59, 52, 53, 54, 55, 56, …
-## $ net    &lt;dbl&gt; 83.98333, 74.30000, 75.15000, 74.21667, 74.25000…
+## $ runner &lt;fct&gt; 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, …
+## $ age    &lt;int&gt; 53, 54, 55, 56, 57, 58, 59, 52, 53, 54, 55, 56, 58, 59, 51, 52,…
+## $ net    &lt;dbl&gt; 83.98333, 74.30000, 75.15000, 74.21667, 74.25000, NA, NA, 82.66…
 ```
 
 ---
@@ -61,11 +61,6 @@ class: middle
 ```r
 ggplot(running, aes(x = runner, y = net)) + 
   geom_boxplot()
-```
-
-```
-## Warning: Removed 67 rows containing non-finite values
-## (stat_boxplot).
 ```
 
 &lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
@@ -188,7 +183,7 @@ class: middle
 
 ## No pooling
 
-&lt;img src="img/complete_pool_diagram.png" width="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="img/no_pool_diagram.png" width="50%" style="display: block; margin: auto;" /&gt;
 
 --
 
@@ -236,6 +231,8 @@ Drawbacks of a no pooling approach:
 
 class: middle
 
+## Partial Pooling
+
 &lt;img src="img/partial_pool_diagram.png" width="70%" style="display: block; margin: auto;" /&gt;
 
 
@@ -273,9 +270,9 @@ glimpse(spotify)
 ```
 ## Rows: 350
 ## Columns: 3
-## $ artist     &lt;fct&gt; Alok, Alok, Alok, Alok, Alok, Alok, Alok, Al…
-## $ title      &lt;chr&gt; "On &amp; On", "All The Lies", "Hear Me Now", "T…
-## $ popularity &lt;dbl&gt; 79, 56, 75, 65, 52, 45, 79, 61, 61, 61, 56, …
+## $ artist     &lt;fct&gt; Alok, Alok, Alok, Alok, Alok, Alok, Alok, Alok, Alok, Alok,…
+## $ title      &lt;chr&gt; "On &amp; On", "All The Lies", "Hear Me Now", "The Wall", "Hear…
+## $ popularity &lt;dbl&gt; 79, 56, 75, 65, 52, 45, 79, 61, 61, 61, 56, 71, 61, 79, 69,…
 ```
 
 ```r
@@ -367,13 +364,13 @@ class: middle
 class: middle
 
 Popularity varies from artist to artist.
-We model this variability in mean popularity __between__ artists by assuming that the individual mean popularity levels, `\(\mu_j\)`, are _Normally_ distributed around `\(\mu\)` with standard deviation `\(\sigma_\mu\)`,\index{between-group variability}
+We model this variability in mean popularity __between__ artists by assuming that the individual mean popularity levels, `\(\mu_j\)`, are _Normally_ distributed around `\(\mu\)` with standard deviation `\(\sigma_\mu\)`
 
 `$$\mu_j | \mu, \sigma_\mu \sim N(\mu, \sigma^2_\mu)  .$$`
 
 Thus, we can think of the two new parameters as follows:
 
-- `\(\mu\)` = the __global average__ of mean song popularity `\(\mu_j\)` across all artists `\(j\)`, i.e., the mean popularity rating for the most average artist; and\index{global parameter}
+- `\(\mu\)` = the __global average__ of mean song popularity `\(\mu_j\)` across all artists `\(j\)`, i.e., the mean popularity rating for the most average artist; and
 - `\(\sigma_\mu\)` = __between-group variability__, i.e., the standard deviation in mean popularity `\(\mu_j\)` from artist to artist.
 
 ---
@@ -519,7 +516,16 @@ Thus, the _mean_ popularity rating tends to vary by 15.1 points _from artist to 
 
 class: middle
 
-`$$\text{Cor}(Y_{ij}, Y_{kj}) = \frac{\sigma^2_\mu}{\sigma^2_\mu + \sigma^2_y}$$`
+proportion of `\(\text{Var}(Y_{ij})\)` that can be explained by differences in the observations within each group:
+
+`$$\frac{\sigma^2_y}{\sigma^2_\mu + \sigma^2_y}$$` 
+
+&lt;hr&gt;
+
+proportion of `\(\text{Var}(Y_{ij})\)`that can be explained by differences between groups
+
+`$$\frac{\sigma^2_\mu}{\sigma^2_\mu + \sigma^2_y}$$`
+
 
 ---
 
@@ -553,6 +559,8 @@ Thinking of this another way, 54% of the variability in song popularity is expla
 ```
 
 ---
+
+class: middle 
 
 ## Posterior analysis of group-specific parameters
 
@@ -781,7 +789,7 @@ artist_summary_scaled %&gt;%
 
 class: middle
 
-Next consider __posterior prediction for a yet unobserved group__.
+Next consider __posterior prediction for a yet unobserved group__, Mohsen Beats.
 
 --
 
@@ -847,6 +855,8 @@ mohsen_chains %&gt;%
 
 ---
 
+class: middle
+
 We can replicate the "by hand" simulations for Frank Ocean and Mohsen Beats using the `posterior_predict()` shortcut function.
 
 
@@ -861,12 +871,7 @@ mcmc_areas(prediction_shortcut, prob = 0.8) +
   ggplot2::scale_y_discrete(labels = c("Frank Ocean", "Mohsen Beats"))
 ```
 
-```
-## Scale for 'y' is already present. Adding another scale for
-## 'y', which will replace the existing scale.
-```
-
-&lt;img src="slide-09b-hlm-nopred_files/figure-html/ch16-ocean-mohsen-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-38-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -892,7 +897,7 @@ ppc_intervals(artist_means$popularity, yrep = predictions_hierarchical,
 
 class: middle
 
-&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-39-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="slide-09b-hlm-nopred_files/figure-html/unnamed-chunk-40-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -902,16 +907,16 @@ __Shrinkage__ refers to the phenomenon in which the group-specific local trends 
 
 
 
-When utilizing weakly informative priors, the posterior mean predictions of song popularity from the hierarchical model are (roughly) weighted averages of those from the complete pooled ($\overline{y}_{\text{global}}$) and no pooled ($\overline{y}_j$) models:
+When utilizing weakly informative priors, the posterior mean predictions of song popularity from the hierarchical model are (roughly) weighted averages of those from the complete pooled ( `\(\overline{y}_{\text{global}}\)` ) and no pooled ( `\(\overline{y}_j\)` ) models:
 
-`$$\frac{\sigma^2_y}{\sigma^2_y + n_j \sigma^2_\mu} \overline{y}_{\text{global}} + \frac{n_j\sigma^2_\mu}{\sigma^2_y + n_j \sigma^2_\mu} \overline{y}_j.$$`
+`$$\frac{\sigma^2_y}{\sigma^2_y + n_j \sigma^2_\mu} \overline{y}_{\text{global}} + \frac{n_j\sigma^2_\mu}{\sigma^2_y + n_j \sigma^2_\mu} \overline{y}_j$$`
 
 
 ---
 
 class: middle
 
-In posterior predictions for artist `\(j\)`, the _weights_ given to the global and local means depend upon how much data we have on artist `\(j\)` ($n_j$) as well as the comparison of the _within_-group and _between_-group variability in song popularity ( `\(\sigma_y\)` and `\(\sigma_\mu\)` ).
+In posterior predictions for artist `\(j\)`, the _weights_ given to the global and local means depend upon how much data we have on artist `\(j\)` ( `\(n_j\)` ) as well as the comparison of the _within_-group and _between_-group variability in song popularity ( `\(\sigma_y\)` and `\(\sigma_\mu\)` ).
 These weights highlight a couple of scenarios in which individualism fades, i.e., our hierarchical posterior predictions shrink away from the group-specific means `\(\overline{y}_j\)` and toward the global mean `\(\overline{y}_\text{global}\)`:
 
 - Shrinkage increases as the number of observations on group `\(j\)`, `\(n_j\)`, decreases. That is, we rely more and more on global trends to understand a group for which we have little data.
